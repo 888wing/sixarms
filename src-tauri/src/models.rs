@@ -138,6 +138,10 @@ pub enum InboxItemType {
     TodoFollowup,
     Planning,
     StaleProject,
+    // Phase 2 types
+    AnomalyDetection,    // 異常偵測
+    WeeklyReview,        // 每週回顧
+    PatternInsight,      // 模式洞察
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -204,6 +208,7 @@ pub enum ChatActionType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UserSettings {
     pub notifications: NotificationSettings,
+    pub scan: ScanSettings,
     pub theme: String,
     pub language: String,
 }
@@ -212,6 +217,7 @@ impl Default for UserSettings {
     fn default() -> Self {
         UserSettings {
             notifications: NotificationSettings::default(),
+            scan: ScanSettings::default(),
             theme: "dark".to_string(),
             language: "zh-HK".to_string(),
         }
@@ -231,6 +237,27 @@ impl Default for NotificationSettings {
             daily_summary: true,
             todo_reminder: true,
             stale_project: false,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScanSettings {
+    pub enabled: bool,
+    pub interval_minutes: u32,
+    pub scan_on_startup: bool,
+    pub auto_classify: bool,
+    pub auto_summarize: bool,
+}
+
+impl Default for ScanSettings {
+    fn default() -> Self {
+        ScanSettings {
+            enabled: true,
+            interval_minutes: 30,
+            scan_on_startup: true,
+            auto_classify: true,
+            auto_summarize: true,
         }
     }
 }
