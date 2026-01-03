@@ -9,6 +9,8 @@ import type {
   InboxStatus,
   ChatMessage,
   UserSettings,
+  ScanSettings,
+  SchedulerStatus,
   FileChange,
   GitDiffResult,
 } from './types';
@@ -213,6 +215,24 @@ export const statsApi = {
 
   getCategoryDistribution: () =>
     invoke<[string, number][]>('get_category_distribution'),
+};
+
+// ============================================
+// Scheduler API
+// ============================================
+
+export const schedulerApi = {
+  start: (settings: ScanSettings) =>
+    invoke<void>('start_scheduler', { settings }),
+
+  stop: () =>
+    invoke<void>('stop_scheduler'),
+
+  getStatus: () =>
+    invoke<SchedulerStatus>('get_scheduler_status'),
+
+  triggerManualScan: () =>
+    invoke<void>('trigger_manual_scan'),
 };
 
 // ============================================

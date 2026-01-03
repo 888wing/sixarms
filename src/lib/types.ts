@@ -103,6 +103,7 @@ export type ChatActionType = 'logged' | 'todo_created' | 'project_updated';
 
 export interface UserSettings {
   notifications: NotificationSettings;
+  scan: ScanSettings;
   theme: string;
   language: string;
 }
@@ -111,6 +112,19 @@ export interface NotificationSettings {
   daily_summary: boolean;
   todo_reminder: boolean;
   stale_project: boolean;
+}
+
+export interface ScanSettings {
+  enabled: boolean;
+  interval_minutes: number;
+  scan_on_startup: boolean;
+  auto_classify: boolean;
+  auto_summarize: boolean;
+}
+
+export interface SchedulerStatus {
+  is_running: boolean;
+  last_scan: string | null;
 }
 
 // ============================================
