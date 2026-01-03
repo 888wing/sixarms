@@ -39,15 +39,15 @@ const manifest = {
   platforms: {
     'darwin-aarch64': {
       signature: '',  // Will be filled from .sig file
-      url: `${baseUrl}/Sixarms_${version}_aarch64.app.tar.gz`
+      url: `${baseUrl}/Sixarms_aarch64.app.tar.gz`
     },
     'darwin-x86_64': {
       signature: '',  // Will be filled from .sig file
-      url: `${baseUrl}/Sixarms_${version}_x64.app.tar.gz`
+      url: `${baseUrl}/Sixarms_x64.app.tar.gz`
     },
     'linux-x86_64': {
       signature: '',  // Will be filled from .sig file
-      url: `${baseUrl}/sixarms_${version}_amd64.AppImage`
+      url: `${baseUrl}/Sixarms_${version}_amd64.AppImage`
     },
     'windows-x86_64': {
       signature: '',  // Will be filled from .sig file
@@ -57,10 +57,11 @@ const manifest = {
 };
 
 // Try to read signature files if they exist (in CI environment)
+// File names match Tauri's actual output patterns
 const sigFiles = {
-  'darwin-aarch64': `Sixarms_${version}_aarch64.app.tar.gz.sig`,
-  'darwin-x86_64': `Sixarms_${version}_x64.app.tar.gz.sig`,
-  'linux-x86_64': `sixarms_${version}_amd64.AppImage.sig`,
+  'darwin-aarch64': `Sixarms_aarch64.app.tar.gz.sig`,
+  'darwin-x86_64': `Sixarms_x64.app.tar.gz.sig`,
+  'linux-x86_64': `Sixarms_${version}_amd64.AppImage.sig`,
   'windows-x86_64': `Sixarms_${version}_x64-setup.exe.sig`
 };
 

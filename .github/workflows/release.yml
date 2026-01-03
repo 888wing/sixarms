@@ -83,6 +83,16 @@ jobs:
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      - name: Download signature files
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=${{ steps.get_version.outputs.VERSION }}
+          # Download signature files from release
+          gh release download v${VERSION} --pattern "*.sig" --dir . || true
+          # List downloaded files
+          ls -la *.sig 2>/dev/null || echo "No signature files found"
+
       - name: Generate latest.json
         run: node scripts/generate-update-manifest.js ${{ steps.get_version.outputs.VERSION }}
 
