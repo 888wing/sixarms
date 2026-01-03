@@ -4,12 +4,14 @@ mod grok;
 mod grok_commands;
 mod keychain;
 mod models;
+mod scheduler;
 mod scanner;
 mod scanner_commands;
 
 use db::Database;
 use grok::GrokClient;
 use keychain::Keychain;
+use scheduler::Scheduler;
 use scanner::GitScanner;
 use tauri::Manager;
 
@@ -44,6 +46,10 @@ pub fn run() {
             // Initialize scanner
             let scanner = GitScanner::new();
             app.manage(scanner);
+
+            // Initialize scheduler
+            let scheduler = Scheduler::new();
+            app.manage(scheduler);
 
             // Setup logging in debug mode
             if cfg!(debug_assertions) {
