@@ -7,6 +7,7 @@ mod keychain;
 mod models;
 mod notification;
 mod scheduler;
+mod scheduler_commands;
 mod scanner;
 mod scanner_commands;
 
@@ -141,6 +142,11 @@ pub fn run() {
             scanner_commands::get_current_branch,
             scanner_commands::is_git_repo,
             scanner_commands::format_changes,
+            // Scheduler commands
+            scheduler_commands::start_scheduler,
+            scheduler_commands::stop_scheduler,
+            scheduler_commands::get_scheduler_status,
+            scheduler_commands::trigger_manual_scan,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
