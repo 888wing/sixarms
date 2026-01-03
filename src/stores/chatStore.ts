@@ -60,7 +60,7 @@ export const useChatStore = create<ChatState>((set) => ({
         // If Grok fails, add error message
         const errorMessage = await chatApi.createMessage(
           'assistant',
-          `抱歉，AI 暫時無法回應。錯誤：${String(aiError)}`,
+          `Sorry, AI is temporarily unavailable. Error: ${String(aiError)}`,
           projectId
         );
 

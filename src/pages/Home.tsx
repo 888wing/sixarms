@@ -50,7 +50,7 @@ export function Home() {
     fetchInboxItems("pending");
   }, [fetchProjects, fetchTodos, fetchInboxItems]);
 
-  const today = new Date().toLocaleDateString("zh-HK", {
+  const today = new Date().toLocaleDateString("en-US", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -59,7 +59,7 @@ export function Home() {
   const handleToggleTodo = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === "completed" ? "pending" : "completed";
     await updateTodoStatus(id, newStatus as "pending" | "completed");
-    toast.success(newStatus === "completed" ? "任務已完成" : "任務已恢復");
+    toast.success(newStatus === "completed" ? "Task completed" : "Task restored");
   };
 
   const handleCreateTodo = async () => {
@@ -67,12 +67,12 @@ export function Home() {
     await createTodo(newTodoTitle);
     setNewTodoTitle("");
     setShowNewTodo(false);
-    toast.success("TODO 已新增");
+    toast.success("TODO added");
   };
 
   const handleAnswerInbox = async (id: string, answer: string) => {
     await answerItem(id, answer);
-    toast.success("已回答");
+    toast.success("Answered");
   };
 
   return (
@@ -124,8 +124,8 @@ export function Home() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent-green/10 mb-4">
               <span className="text-3xl">✨</span>
             </div>
-            <p className="text-text-primary font-medium mb-1">所有問題已處理完畢</p>
-            <p className="text-text-muted text-sm">AI Agent 會喺有新問題時通知你</p>
+            <p className="text-text-primary font-medium mb-1">All questions handled</p>
+            <p className="text-text-muted text-sm">AI Agent will notify you when there are new questions</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -170,15 +170,15 @@ export function Home() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent-cyan/10 mb-4">
                 <FolderOpen size={28} className="text-accent-cyan" />
               </div>
-              <p className="text-text-primary font-medium mb-1">開始追蹤你嘅專案</p>
-              <p className="text-text-muted text-sm mb-4">新增專案嚟記錄每日開發進度</p>
+              <p className="text-text-primary font-medium mb-1">Start tracking your projects</p>
+              <p className="text-text-muted text-sm mb-4">Add a project to track your daily development progress</p>
               <button
                 onClick={() => navigate("/settings")}
                 className="px-4 py-2 bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/50 rounded text-sm hover:bg-accent-cyan/30 transition-colors"
               >
                 <span className="flex items-center gap-2">
                   <Plus size={16} />
-                  新增專案
+                  Add Project
                 </span>
               </button>
             </div>
@@ -203,7 +203,7 @@ export function Home() {
                       </p>
                     </div>
                   </div>
-                  <span className="text-xs text-accent-green">活躍</span>
+                  <span className="text-xs text-accent-green">Active</span>
                 </motion.div>
               ))}
             </div>
@@ -231,8 +231,8 @@ export function Home() {
                   <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent-amber/10 mb-3">
                     <CheckCircle size={24} className="text-accent-amber" />
                   </div>
-                  <p className="text-text-primary font-medium mb-1">今日未有待辦事項</p>
-                  <p className="text-text-muted text-sm">點擊下方按鈕新增 TODO</p>
+                  <p className="text-text-primary font-medium mb-1">No pending tasks today</p>
+                  <p className="text-text-muted text-sm">Click below to add a TODO</p>
                 </div>
               ) : (
                 todayTodos.map((todo, index) => (
@@ -282,7 +282,7 @@ export function Home() {
                     value={newTodoTitle}
                     onChange={(e) => setNewTodoTitle(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleCreateTodo()}
-                    placeholder="輸入 TODO..."
+                    placeholder="Enter TODO..."
                     className="terminal-input flex-1 text-sm"
                     autoFocus
                   />
@@ -291,7 +291,7 @@ export function Home() {
                     disabled={!newTodoTitle.trim()}
                     className="px-3 py-1.5 bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/50 rounded text-sm disabled:opacity-50"
                   >
-                    新增
+                    Add
                   </button>
                   <button
                     onClick={() => {
@@ -300,7 +300,7 @@ export function Home() {
                     }}
                     className="px-3 py-1.5 text-text-secondary text-sm"
                   >
-                    取消
+                    Cancel
                   </button>
                 </div>
               ) : (
@@ -309,7 +309,7 @@ export function Home() {
                   className="w-full flex items-center justify-center gap-2 p-3 text-text-muted hover:text-accent-cyan border border-dashed border-border-subtle rounded hover:border-accent-cyan/30 transition-colors"
                 >
                   <Plus size={16} />
-                  <span className="text-sm">新增 TODO</span>
+                  <span className="text-sm">Add TODO</span>
                 </button>
               )}
             </div>
@@ -327,10 +327,10 @@ export function Home() {
         <h2 className="section-header text-lg mb-4">QUICK ACTIONS</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { icon: FileText, label: "記錄今日工作", path: "/chat" },
-            { icon: Plus, label: "新增 TODO", action: () => setShowNewTodo(true) },
-            { icon: BarChart3, label: "查看統計", path: "/dashboard" },
-            { icon: MessageSquare, label: "問 AI", path: "/chat" },
+            { icon: FileText, label: "Log Today's Work", path: "/chat" },
+            { icon: Plus, label: "Add TODO", action: () => setShowNewTodo(true) },
+            { icon: BarChart3, label: "View Stats", path: "/dashboard" },
+            { icon: MessageSquare, label: "Ask AI", path: "/chat" },
           ].map((action) => (
             <motion.button
               key={action.label}
@@ -402,7 +402,7 @@ function InboxItemCard({
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            placeholder="輸入回答..."
+            placeholder="Enter your answer..."
             className="terminal-input flex-1 text-sm"
           />
           <button
@@ -410,7 +410,7 @@ function InboxItemCard({
             disabled={!answer.trim()}
             className="px-3 py-1.5 bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/50 rounded text-sm disabled:opacity-50"
           >
-            送出
+            Submit
           </button>
         </div>
       ) : (
@@ -419,19 +419,19 @@ function InboxItemCard({
             onClick={() => handleQuickAnswer("yes")}
             className="px-3 py-1.5 bg-accent-green/10 text-accent-green border border-accent-green/30 rounded text-sm hover:bg-accent-green/20 transition-colors"
           >
-            係，加入
+            Yes, add it
           </button>
           <button
             onClick={() => handleQuickAnswer("later")}
             className="px-3 py-1.5 bg-bg-elevated text-text-secondary border border-border-subtle rounded text-sm hover:text-text-primary transition-colors"
           >
-            遲啲先
+            Later
           </button>
           <button
             onClick={() => handleQuickAnswer("skip")}
             className="px-3 py-1.5 bg-bg-elevated text-text-secondary border border-border-subtle rounded text-sm hover:text-text-primary transition-colors"
           >
-            跳過
+            Skip
           </button>
         </div>
       )}

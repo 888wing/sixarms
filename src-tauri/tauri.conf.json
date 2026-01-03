@@ -32,6 +32,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -42,5 +43,13 @@
     "category": "DeveloperTool",
     "shortDescription": "AI-powered development progress tracking",
     "longDescription": "Sixarms is an AI-powered development progress tracking assistant that helps developers track their daily work, manage todos, and gain insights into their coding patterns."
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEM1OEMxRDI0RTJDRjNFNEQKUldSTlBzL2lKQjJNeFV2bmVRQllQSVlsNWlpaVNKcll0Z3E5YWdJSFJjbUkwQmQzSTZsUk5ZRkUK",
+      "endpoints": [
+        "https://github.com/888wing/sixarms/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

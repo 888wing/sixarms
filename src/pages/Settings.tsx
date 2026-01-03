@@ -55,16 +55,16 @@ export function Settings() {
       const success = await saveApiKey(apiKey);
       if (success) {
         setApiKey("");
-        toast.success("API Key 已成功儲存");
+        toast.success("API Key saved successfully");
       } else {
-        toast.error("儲存 API Key 失敗");
+        toast.error("Failed to save API Key");
       }
     }
   };
 
   const handleSaveSettings = async () => {
     await saveSettings(settings);
-    toast.success("設定已儲存");
+    toast.success("Settings saved");
   };
 
   const handleAddProject = async () => {
@@ -74,9 +74,9 @@ export function Settings() {
         setNewProjectName("");
         setNewProjectPath("");
         setShowAddProject(false);
-        toast.success(`專案「${newProjectName}」已新增`);
+        toast.success(`Project "${newProjectName}" added`);
       } catch {
-        toast.error("新增專案失敗");
+        toast.error("Failed to add project");
       }
     }
   };
@@ -86,7 +86,7 @@ export function Settings() {
       const selected = await open({
         directory: true,
         multiple: false,
-        title: "選擇專案資料夾",
+        title: "Select Project Folder",
       });
       if (selected) {
         setNewProjectPath(selected as string);
@@ -131,19 +131,19 @@ export function Settings() {
           const folderName = path.split("/").pop() || "";
           setNewProjectName(folderName);
         }
-        toast.info("資料夾路徑已填入");
+        toast.info("Folder path filled");
       }
     }
   }, [newProjectName, toast]);
 
   const handleStatusChange = async (id: string, status: string) => {
     await updateProjectStatus(id, status as ProjectStatus);
-    toast.success("專案狀態已更新");
+    toast.success("Project status updated");
   };
 
   const handleDeleteProject = async (id: string) => {
     await deleteProject(id);
-    toast.success("專案已刪除");
+    toast.success("Project deleted");
   };
 
   const handleNotificationChange = (key: keyof typeof settings.notifications) => {
@@ -157,9 +157,9 @@ export function Settings() {
   const handleManualScan = async () => {
     try {
       await triggerManualScan();
-      toast.success("手動掃描已觸發");
+      toast.success("Manual scan triggered");
     } catch {
-      toast.error("手動掃描失敗");
+      toast.error("Manual scan failed");
     }
   };
 
@@ -186,17 +186,16 @@ export function Settings() {
           <h2 className="section-header text-lg">GROK API KEY</h2>
           {hasApiKey && (
             <span className="text-xs bg-accent-green/20 text-accent-green px-2 py-0.5 rounded">
-              已設定
+              Configured
             </span>
           )}
         </div>
 
         <p className="text-text-secondary text-sm mb-4">
-          輸入你嘅 Grok API Key 嚟啟用 AI 功能。你可以喺{" "}
+          Enter your Grok API Key to enable AI features. You can get one from{" "}
           <a href="https://x.ai" target="_blank" rel="noopener noreferrer" className="text-accent-cyan hover:underline">
             x.ai
-          </a>{" "}
-          獲取 API Key。
+          </a>
         </p>
 
         <div className="relative">
@@ -204,7 +203,7 @@ export function Settings() {
             type={showApiKey ? "text" : "password"}
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
-            placeholder={hasApiKey ? "輸入新 API Key 嚟更新..." : "xai-..."}
+            placeholder={hasApiKey ? "Enter new API Key to update..." : "xai-..."}
             className="terminal-input w-full pr-28"
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
@@ -227,7 +226,7 @@ export function Settings() {
         </div>
 
         <p className="text-text-muted text-xs mt-2">
-          💡 API Key 會安全儲存喺 macOS Keychain
+          API Key is securely stored in macOS Keychain
         </p>
       </motion.section>
 
@@ -248,7 +247,7 @@ export function Settings() {
             className="flex items-center gap-1 text-sm text-accent-cyan hover:text-accent-cyan/80 transition-colors"
           >
             <Plus size={16} />
-            新增專案
+            Add Project
           </button>
         </div>
 
@@ -260,7 +259,7 @@ export function Settings() {
                 type="text"
                 value={newProjectName}
                 onChange={(e) => setNewProjectName(e.target.value)}
-                placeholder="專案名稱"
+                placeholder="Project Name"
                 className="terminal-input w-full"
               />
 
@@ -282,7 +281,7 @@ export function Settings() {
                     type="text"
                     value={newProjectPath}
                     onChange={(e) => setNewProjectPath(e.target.value)}
-                    placeholder="拖放資料夾或點擊瀏覽..."
+                    placeholder="Drop folder or click Browse..."
                     className="terminal-input flex-1 border-0 bg-transparent"
                   />
                   <button
@@ -291,7 +290,7 @@ export function Settings() {
                     className="flex items-center gap-1.5 px-3 py-2 mr-1 text-sm text-accent-cyan hover:bg-accent-cyan/10 rounded transition-colors"
                   >
                     <FolderOpen size={16} />
-                    瀏覽
+                    Browse
                   </button>
                 </div>
 
@@ -300,7 +299,7 @@ export function Settings() {
                   <div className="absolute inset-0 flex items-center justify-center bg-accent-cyan/10 rounded pointer-events-none">
                     <div className="flex items-center gap-2 text-accent-cyan">
                       <Upload size={20} />
-                      <span className="text-sm font-medium">放開以選擇資料夾</span>
+                      <span className="text-sm font-medium">Drop to select folder</span>
                     </div>
                   </div>
                 )}
@@ -308,7 +307,7 @@ export function Settings() {
 
               <p className="text-text-muted text-xs flex items-center gap-1">
                 <span>💡</span>
-                <span>你可以拖放資料夾到上方，或者點擊「瀏覽」按鈕選擇</span>
+                <span>You can drag & drop a folder above, or click "Browse" to select</span>
               </p>
 
               <div className="flex justify-end gap-2 pt-2">
@@ -320,14 +319,14 @@ export function Settings() {
                   }}
                   className="px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
                 >
-                  取消
+                  Cancel
                 </button>
                 <button
                   onClick={handleAddProject}
                   disabled={!newProjectName.trim() || !newProjectPath.trim()}
                   className="px-3 py-1.5 text-sm bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/50 rounded hover:bg-accent-cyan/30 disabled:opacity-50 transition-colors"
                 >
-                  新增專案
+                  Add Project
                 </button>
               </div>
             </div>
@@ -345,15 +344,15 @@ export function Settings() {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent-cyan/10 mb-4">
               <FolderOpen size={28} className="text-accent-cyan" />
             </div>
-            <p className="text-text-primary font-medium mb-1">仲未有專案</p>
-            <p className="text-text-muted text-sm mb-4">新增專案開始追蹤你嘅開發進度</p>
+            <p className="text-text-primary font-medium mb-1">No projects yet</p>
+            <p className="text-text-muted text-sm mb-4">Add a project to start tracking your development progress</p>
             <button
               onClick={() => setShowAddProject(true)}
               className="px-4 py-2 bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/50 rounded text-sm hover:bg-accent-cyan/30 transition-colors"
             >
               <span className="flex items-center gap-2">
                 <Plus size={16} />
-                新增專案
+                Add Project
               </span>
             </button>
           </div>
@@ -385,9 +384,9 @@ export function Settings() {
                     onChange={(e) => handleStatusChange(project.id, e.target.value)}
                     className="bg-bg-primary text-text-secondary text-xs border border-border-subtle rounded px-2 py-1"
                   >
-                    <option value="active">活躍</option>
-                    <option value="paused">暫停</option>
-                    <option value="archived">封存</option>
+                    <option value="active">Active</option>
+                    <option value="paused">Paused</option>
+                    <option value="archived">Archived</option>
                   </select>
                   <button
                     onClick={() => handleDeleteProject(project.id)}
@@ -416,9 +415,9 @@ export function Settings() {
 
         <div className="space-y-4">
           {[
-            { key: "daily_summary" as const, label: "每日總結", description: "每日提醒你總結當日工作" },
-            { key: "todo_reminder" as const, label: "TODO 提醒", description: "TODO 過期時通知你" },
-            { key: "stale_project" as const, label: "停滯專案提醒", description: "專案超過 30 日冇動時通知你" },
+            { key: "daily_summary" as const, label: "Daily Summary", description: "Daily reminder to summarize your work" },
+            { key: "todo_reminder" as const, label: "TODO Reminder", description: "Notify when TODOs are overdue" },
+            { key: "stale_project" as const, label: "Stale Project Alert", description: "Notify when a project has no activity for 30 days" },
           ].map((item) => (
             <div key={item.key} className="flex items-center justify-between">
               <div>
@@ -464,7 +463,7 @@ export function Settings() {
             {schedulerStatus?.is_running && (
               <span className="text-xs bg-accent-green/20 text-accent-green px-2 py-0.5 rounded flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-accent-green rounded-full animate-pulse" />
-                運行中
+                Running
               </span>
             )}
           </div>
@@ -474,13 +473,13 @@ export function Settings() {
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-accent-cyan hover:bg-accent-cyan/10 rounded transition-colors"
           >
             {settingsLoading ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
-            手動掃描
+            Manual Scan
           </button>
         </div>
 
         {schedulerStatus?.last_scan && (
           <p className="text-text-muted text-xs mb-4">
-            上次掃描：{new Date(schedulerStatus.last_scan).toLocaleString('zh-HK')}
+            Last scan: {new Date(schedulerStatus.last_scan).toLocaleString('en-US')}
           </p>
         )}
 
@@ -488,8 +487,8 @@ export function Settings() {
           {/* Enable Auto Scan Toggle */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-text-primary text-sm">啟用自動掃描</p>
-              <p className="text-text-muted text-xs">定時掃描專案並分析改動</p>
+              <p className="text-text-primary text-sm">Enable Auto Scan</p>
+              <p className="text-text-muted text-xs">Periodically scan projects and analyze changes</p>
             </div>
             <button
               onClick={() => handleScanChange("enabled", !settings.scan.enabled)}
@@ -513,26 +512,26 @@ export function Settings() {
           {/* Scan Interval */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-text-primary text-sm">掃描間隔</p>
-              <p className="text-text-muted text-xs">每隔幾分鐘掃描一次</p>
+              <p className="text-text-primary text-sm">Scan Interval</p>
+              <p className="text-text-muted text-xs">How often to scan for changes</p>
             </div>
             <select
               value={settings.scan.interval_minutes}
               onChange={(e) => handleScanChange("interval_minutes", parseInt(e.target.value))}
               className="bg-bg-primary text-text-secondary text-sm border border-border-subtle rounded px-3 py-1.5"
             >
-              <option value={15}>15 分鐘</option>
-              <option value={30}>30 分鐘</option>
-              <option value={60}>1 小時</option>
-              <option value={120}>2 小時</option>
+              <option value={15}>15 minutes</option>
+              <option value={30}>30 minutes</option>
+              <option value={60}>1 hour</option>
+              <option value={120}>2 hours</option>
             </select>
           </div>
 
           {/* Scan on Startup Toggle */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-text-primary text-sm">啟動時掃描</p>
-              <p className="text-text-muted text-xs">App 啟動時自動掃描所有專案</p>
+              <p className="text-text-primary text-sm">Scan on Startup</p>
+              <p className="text-text-muted text-xs">Automatically scan all projects when app starts</p>
             </div>
             <button
               onClick={() => handleScanChange("scan_on_startup", !settings.scan.scan_on_startup)}
@@ -557,14 +556,14 @@ export function Settings() {
           <div className="pt-4 border-t border-border-subtle">
             <div className="flex items-center gap-2 mb-4">
               <Bot size={16} className="text-accent-purple" />
-              <p className="text-text-primary text-sm font-medium">AI 功能</p>
+              <p className="text-text-primary text-sm font-medium">AI Features</p>
             </div>
 
             {/* Auto Classify Toggle */}
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-text-primary text-sm">自動分類</p>
-                <p className="text-text-muted text-xs">AI 自動分類改動類型（feature/bugfix/refactor...）</p>
+                <p className="text-text-primary text-sm">Auto Classification</p>
+                <p className="text-text-muted text-xs">AI automatically categorizes changes (feature/bugfix/refactor...)</p>
               </div>
               <button
                 onClick={() => handleScanChange("auto_classify", !settings.scan.auto_classify)}
@@ -588,8 +587,8 @@ export function Settings() {
             {/* Auto Summarize Toggle */}
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-text-primary text-sm">自動摘要</p>
-                <p className="text-text-muted text-xs">AI 自動生成每日工作摘要</p>
+                <p className="text-text-primary text-sm">Auto Summary</p>
+                <p className="text-text-muted text-xs">AI automatically generates daily work summaries</p>
               </div>
               <button
                 onClick={() => handleScanChange("auto_summarize", !settings.scan.auto_summarize)}
@@ -634,15 +633,15 @@ export function Settings() {
           {saved ? (
             <span className="flex items-center gap-2">
               <Check size={16} />
-              已儲存
+              Saved
             </span>
           ) : settingsLoading ? (
             <span className="flex items-center gap-2">
               <Loader2 size={16} className="animate-spin" />
-              儲存中...
+              Saving...
             </span>
           ) : (
-            "儲存設定"
+            "Save Settings"
           )}
         </button>
       </motion.div>

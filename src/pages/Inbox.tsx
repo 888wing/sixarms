@@ -82,7 +82,7 @@ function InboxItemCard({
           {item.status === "answered" && (
             <span className="bg-accent-green/20 text-accent-green px-2 py-0.5 rounded flex items-center gap-1">
               <Check size={10} />
-              已回答
+              Answered
             </span>
           )}
         </div>
@@ -92,7 +92,7 @@ function InboxItemCard({
       {item.context && (
         <div className="mb-4 p-3 bg-bg-elevated rounded font-mono text-sm text-text-secondary whitespace-pre-wrap">
           <span className="text-text-muted">{"> "}</span>
-          偵測到改動:
+          Changes detected:
           <div className="mt-2 text-text-primary">{item.context}</div>
         </div>
       )}
@@ -121,7 +121,7 @@ function InboxItemCard({
             <div className="mb-4">
               <input
                 type="text"
-                placeholder="輸入你嘅回答..."
+                placeholder="Enter your answer..."
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
@@ -156,9 +156,9 @@ function InboxItemCard({
           {item.item_type === "planning" && (
             <div className="flex flex-wrap gap-2 mb-4">
               {[
-                { id: "continue", label: "繼續做", icon: "🚀" },
-                { id: "delay", label: "延期", icon: "📅" },
-                { id: "cancel", label: "取消", icon: "❌" },
+                { id: "continue", label: "Continue", icon: "🚀" },
+                { id: "delay", label: "Delay", icon: "📅" },
+                { id: "cancel", label: "Cancel", icon: "❌" },
               ].map((action) => (
                 <button
                   key={action.id}
@@ -185,14 +185,14 @@ function InboxItemCard({
               onClick={handleSkip}
               className="px-4 py-2 text-sm text-text-secondary hover:text-text-primary transition-colors"
             >
-              跳過
+              Skip
             </button>
             <button
               onClick={handleSubmit}
               disabled={!inputValue && !selectedAction}
               className="px-4 py-2 text-sm bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/50 rounded hover:bg-accent-cyan/30 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              確認並記錄
+              Confirm & Log
               <span>▶</span>
             </button>
           </div>
@@ -257,13 +257,13 @@ export function Inbox() {
     searchFiltered.forEach((item) => {
       const date = new Date(item.created_at);
       const dateStr = date.toDateString();
-      let label = date.toLocaleDateString("zh-HK", {
+      let label = date.toLocaleDateString("en-US", {
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
       });
-      if (dateStr === today) label = "今日";
-      else if (dateStr === yesterday) label = "昨日";
+      if (dateStr === today) label = "Today";
+      else if (dateStr === yesterday) label = "Yesterday";
 
       if (!groups[label]) groups[label] = [];
       groups[label].push(item);
@@ -287,11 +287,11 @@ export function Inbox() {
           <h1 className="section-header text-2xl">INBOX</h1>
           <div className="flex items-center gap-4 text-sm">
             <span className="text-accent-rose font-mono">
-              [{pendingCount()}] 待處理
+              [{pendingCount()}] Pending
             </span>
             <span className="text-text-muted">·</span>
             <span className="text-text-secondary font-mono">
-              {answeredCount()} 已處理
+              {answeredCount()} Processed
             </span>
           </div>
         </div>
@@ -307,7 +307,7 @@ export function Inbox() {
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >
-              全部
+              All
             </button>
             <button
               onClick={() => handleFilterChange("pending")}
@@ -317,7 +317,7 @@ export function Inbox() {
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >
-              待處理
+              Pending
             </button>
             <button
               onClick={() => handleFilterChange("answered")}
@@ -327,7 +327,7 @@ export function Inbox() {
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >
-              已處理
+              Processed
             </button>
           </div>
 
@@ -338,7 +338,7 @@ export function Inbox() {
             />
             <input
               type="text"
-              placeholder="搜尋..."
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="terminal-input pl-10 py-2 text-sm w-48"
@@ -385,7 +385,7 @@ export function Inbox() {
             >
               <MessageSquare size={48} className="mx-auto text-text-muted mb-4" />
               <p className="text-text-secondary">
-                {searchQuery ? "搵唔到相關內容" : "冇嘢要處理 🎉"}
+                {searchQuery ? "No results found" : "Nothing to process 🎉"}
               </p>
             </motion.div>
           )}

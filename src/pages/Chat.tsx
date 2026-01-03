@@ -16,7 +16,7 @@ function ActionCard({ action }: { action?: ChatAction }) {
         <div className="text-text-muted mb-1">┌─ LOGGED ─────────────────────────────────────────┐</div>
         <div className="text-text-primary">│ {data.date}</div>
         <div className="text-text-primary">│ {data.summary}</div>
-        <div className="text-text-primary">│ 類型：{data.category}</div>
+        <div className="text-text-primary">│ Type: {data.category}</div>
         <div className="text-text-muted">└─────────────────────────────────────────────────┘</div>
       </div>
     );
@@ -147,7 +147,7 @@ export function Chat() {
           >
             <span className="text-lg">{selectedProject ? "📁" : "🌐"}</span>
             <span className="font-mono text-sm">
-              {selectedProject?.name ?? "所有專案"}
+              {selectedProject?.name ?? "All Projects"}
             </span>
             <ChevronDown size={16} />
           </button>
@@ -160,7 +160,7 @@ export function Chat() {
                   !selectedProjectId ? "text-accent-cyan" : "text-text-secondary"
                 }`}
               >
-                🌐 所有專案
+                🌐 All Projects
               </button>
               {projects.filter(p => p.status === 'active').map((project) => (
                 <button
@@ -175,7 +175,7 @@ export function Chat() {
               ))}
               {projects.filter(p => p.status === 'active').length === 0 && (
                 <div className="px-4 py-2 text-sm text-text-muted">
-                  未有活躍專案
+                  No active projects
                 </div>
               )}
             </div>
@@ -188,9 +188,9 @@ export function Chat() {
         <div className="mx-4 mt-4 p-3 bg-accent-amber/10 border border-accent-amber/30 rounded flex items-center gap-3">
           <AlertCircle size={18} className="text-accent-amber flex-shrink-0" />
           <div className="text-sm">
-            <span className="text-accent-amber font-medium">未設定 API Key</span>
+            <span className="text-accent-amber font-medium">API Key not configured</span>
             <span className="text-text-secondary ml-2">
-              請到設定頁面輸入 Grok API Key 以啟用 AI 對話功能
+              Please go to Settings to enter your Grok API Key to enable AI chat
             </span>
           </div>
         </div>
@@ -207,8 +207,8 @@ export function Chat() {
             <div className="text-4xl mb-4">💬</div>
             <p className="text-center">
               {hasApiKey
-                ? "開始同 AI 傾計吧！\n佢可以幫你記錄工作進度、管理任務"
-                : "設定 API Key 後就可以開始對話"}
+                ? "Start chatting with AI!\nIt can help you log work progress and manage tasks"
+                : "Set up your API Key to start chatting"}
             </p>
           </div>
         ) : (
@@ -275,7 +275,7 @@ export function Chat() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-              placeholder={hasApiKey ? "輸入訊息..." : "請先設定 API Key..."}
+              placeholder={hasApiKey ? "Type a message..." : "Please set up API Key first..."}
               disabled={!hasApiKey || sending}
               className="terminal-input w-full pl-8 pr-12 disabled:opacity-50 disabled:cursor-not-allowed"
             />
@@ -292,8 +292,8 @@ export function Chat() {
             </button>
           </div>
           <div className="flex items-center gap-4 mt-2 text-xs text-text-muted">
-            <span>💡 直接描述你今日做咗咩</span>
-            <span>· AI 會幫你記錄同分類</span>
+            <span>💡 Describe what you worked on today</span>
+            <span>· AI will help you log and categorize it</span>
           </div>
         </div>
       </div>

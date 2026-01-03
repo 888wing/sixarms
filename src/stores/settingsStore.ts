@@ -41,7 +41,7 @@ const defaultSettings: UserSettings = {
     auto_summarize: true,
   },
   theme: 'dark',
-  language: 'zh-HK',
+  language: 'en',
 };
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -68,6 +68,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       await settingsApi.save(settings);
       set({ settings, loading: false, saved: true });
       setTimeout(() => set({ saved: false }), 2000);
+
+      // Restart scheduler with new settings if scan settings changed
+      const { schedulerStatus } = get();
+      if (settings.scan.enabled) {
+        // Always restart with new settings to apply changes
+        await schedulerApi.start(settings.scan);
+        await get().fetchSchedulerStatus();
+      } else if (schedulerStatus?.is_running) {
+        // Stop scheduler if disabled
+        await schedulerApi.stop();
+        await get().fetchSchedulerStatus();
+      }
     } catch (error) {
       set({ error: String(error), loading: false });
     }

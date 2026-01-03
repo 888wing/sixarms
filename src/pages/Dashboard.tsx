@@ -98,19 +98,19 @@ export function Dashboard() {
   const achievements = [
     {
       icon: "📁",
-      text: `${projects.filter((p) => p.status === "active").length} 個活躍專案`,
+      text: `${projects.filter((p) => p.status === "active").length} active projects`,
     },
     {
       icon: "✅",
-      text: `完成 ${completedTodos} 個 TODO`,
+      text: `${completedTodos} TODOs completed`,
     },
     {
       icon: "📝",
-      text: `${pendingTodos} 個待辦事項`,
+      text: `${pendingTodos} pending tasks`,
     },
     {
       icon: "📊",
-      text: `${activityData.filter(([, c]) => c > 0).length} 日有活動`,
+      text: `${activityData.filter(([, c]) => c > 0).length} active days`,
     },
   ];
 
@@ -143,9 +143,9 @@ export function Dashboard() {
           onChange={(e) => setTimeRange(e.target.value as typeof timeRange)}
           className="terminal-input text-sm py-2"
         >
-          <option value="month">本月</option>
-          <option value="quarter">本季</option>
-          <option value="year">本年</option>
+          <option value="month">This Month</option>
+          <option value="quarter">This Quarter</option>
+          <option value="year">This Year</option>
         </select>
       </motion.header>
 
@@ -251,7 +251,7 @@ export function Dashboard() {
 
               <div className="flex items-center gap-4 mt-4 text-xs text-text-muted">
                 <span className="flex items-center gap-1">
-                  <span className="w-3 h-0.5 bg-accent-cyan" /> 活動次數
+                  <span className="w-3 h-0.5 bg-accent-cyan" /> Activity Count
                 </span>
               </div>
             </motion.section>
@@ -271,7 +271,7 @@ export function Dashboard() {
               {distributionWithPercentage.length === 0 ? (
                 <div className="text-center py-8 text-text-muted">
                   <BarChart3 size={32} className="mx-auto mb-2 opacity-50" />
-                  <p>未有足夠數據</p>
+                  <p>Not enough data</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -315,7 +315,7 @@ export function Dashboard() {
               <div className="space-y-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-text-secondary">完成</span>
+                    <span className="text-text-secondary">Completed</span>
                     <span className="font-mono text-accent-green">{completedTodos}</span>
                   </div>
                   <div className="h-3 bg-bg-elevated rounded overflow-hidden">
@@ -332,7 +332,7 @@ export function Dashboard() {
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-text-secondary">待辦</span>
+                    <span className="text-text-secondary">Pending</span>
                     <span className="font-mono text-accent-amber">{pendingTodos}</span>
                   </div>
                   <div className="h-3 bg-bg-elevated rounded overflow-hidden">
@@ -349,7 +349,7 @@ export function Dashboard() {
 
                 <div className="pt-2 border-t border-border-subtle">
                   <div className="flex justify-between text-sm">
-                    <span className="text-text-secondary">總計</span>
+                    <span className="text-text-secondary">Total</span>
                     <span className="font-mono text-text-primary">{totalTodos}</span>
                   </div>
                 </div>

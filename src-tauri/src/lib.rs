@@ -98,12 +98,17 @@ pub fn run() {
                 )?;
             }
 
+            // Initialize updater plugin (desktop only)
+            #[cfg(desktop)]
+            app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+
             Ok(())
         })
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_process::init())
         .invoke_handler(tauri::generate_handler![
             // Database commands
             commands::get_projects,

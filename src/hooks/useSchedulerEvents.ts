@@ -22,7 +22,7 @@ export function useSchedulerEvents() {
     listen<SchedulerEventPayloads['scheduler:startup-scan-started']>(
       'scheduler:startup-scan-started',
       () => {
-        toast.info('正在執行啟動掃描...');
+        toast.info('Running startup scan...');
       }
     ).then((unlisten) => unsubscribers.push(unlisten));
 
@@ -31,9 +31,9 @@ export function useSchedulerEvents() {
       (event) => {
         const count = event.payload;
         if (count > 0) {
-          toast.success(`啟動掃描完成，發現 ${count} 個專案有改動`);
+          toast.success(`Startup scan complete, found ${count} project(s) with changes`);
         } else {
-          toast.info('啟動掃描完成，無新改動');
+          toast.info('Startup scan complete, no new changes');
         }
       }
     ).then((unlisten) => unsubscribers.push(unlisten));
@@ -42,7 +42,7 @@ export function useSchedulerEvents() {
     listen<SchedulerEventPayloads['scheduler:scan-started']>(
       'scheduler:scan-started',
       () => {
-        toast.info('正在執行定時掃描...');
+        toast.info('Running scheduled scan...');
       }
     ).then((unlisten) => unsubscribers.push(unlisten));
 
@@ -51,9 +51,9 @@ export function useSchedulerEvents() {
       (event) => {
         const inboxItemsCreated = event.payload;
         if (inboxItemsCreated > 0) {
-          toast.success(`掃描完成，建立 ${inboxItemsCreated} 個收件箱項目`);
+          toast.success(`Scan complete, created ${inboxItemsCreated} inbox item(s)`);
         } else {
-          toast.info('掃描完成，無新項目');
+          toast.info('Scan complete, no new items');
         }
       }
     ).then((unlisten) => unsubscribers.push(unlisten));

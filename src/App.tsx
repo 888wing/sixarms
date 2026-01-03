@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Sidebar } from "./components/layout/Sidebar";
 import { ToastProvider } from "./components/Toast";
+import { UpdateChecker } from "./components/UpdateChecker";
 import { useSchedulerEvents } from "./hooks/useSchedulerEvents";
 import { Home } from "./pages/Home";
 import { Dashboard } from "./pages/Dashboard";
@@ -34,6 +35,7 @@ function App() {
   return (
     <ToastProvider>
       <AppContent />
+      <UpdateChecker />
     </ToastProvider>
   );
 }

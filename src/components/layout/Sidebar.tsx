@@ -44,9 +44,7 @@ export function Sidebar() {
           className="flex items-center gap-3 overflow-hidden"
           animate={{ opacity: 1 }}
         >
-          <div className="w-8 h-8 rounded bg-accent-cyan/20 flex items-center justify-center">
-            <span className="text-accent-cyan font-display font-bold text-sm">S</span>
-          </div>
+          <img src="/logo.svg" alt="Sixarms" className="w-8 h-8" />
           <AnimatePresence>
             {isExpanded && (
               <motion.span
