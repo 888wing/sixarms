@@ -5,6 +5,7 @@ mod grok;
 mod grok_commands;
 mod keychain;
 mod models;
+mod notification;
 mod scheduler;
 mod scanner;
 mod scanner_commands;
@@ -13,6 +14,7 @@ use ai_agent::AiAgent;
 use db::Database;
 use grok::GrokClient;
 use keychain::Keychain;
+use notification::NotificationService;
 use scheduler::Scheduler;
 use scanner::GitScanner;
 use tauri::Manager;
@@ -57,6 +59,10 @@ pub fn run() {
             let ai_agent = AiAgent::new();
             app.manage(ai_agent);
 
+            // Initialize Notification Service
+            let notification_service = NotificationService::new();
+            app.manage(notification_service);
+
             // Run startup scan if enabled
             let app_handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
@@ -96,6 +102,7 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init())
         .invoke_handler(tauri::generate_handler![
             // Database commands
             commands::get_projects,
