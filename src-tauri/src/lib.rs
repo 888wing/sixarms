@@ -1,3 +1,4 @@
+mod ai_agent;
 mod commands;
 mod db;
 mod grok;
@@ -8,6 +9,7 @@ mod scheduler;
 mod scanner;
 mod scanner_commands;
 
+use ai_agent::AiAgent;
 use db::Database;
 use grok::GrokClient;
 use keychain::Keychain;
@@ -50,6 +52,10 @@ pub fn run() {
             // Initialize scheduler
             let scheduler = Scheduler::new();
             app.manage(scheduler.clone());
+
+            // Initialize AI Agent
+            let ai_agent = AiAgent::new();
+            app.manage(ai_agent);
 
             // Run startup scan if enabled
             let app_handle = app.handle().clone();
