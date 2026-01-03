@@ -4,10 +4,14 @@
 
 1. [環境設置](#環境設置)
 2. [功能模組測試](#功能模組測試)
+   - 專案管理、每日記錄、待辦事項、收件匣
+   - AI 對話、Git 掃描、排程器、設定
+   - 自動更新、使用者介面、鍵盤操作
 3. [整合測試](#整合測試)
 4. [效能測試](#效能測試)
 5. [安全性測試](#安全性測試)
-6. [CI/CD 測試](#cicd-測試)
+6. [跨平台測試](#跨平台測試)
+7. [CI/CD 測試](#cicd-測試)
 
 ---
 
@@ -391,6 +395,68 @@ invoke('scan_range', {
 
 ---
 
+### 10. 使用者介面 (UI/UX)
+
+#### TC-UI01: Logo 與品牌識別
+
+**驗證項目**:
+- [ ] Sidebar 顯示 Sixarms logo（六角形設計）
+- [ ] 瀏覽器 favicon 使用 logo.svg
+- [ ] 展開 Sidebar 時顯示「SIXARMS」文字
+- [ ] Logo 顏色為 cyan 漸層（#22d3ee → #0891b2）
+
+#### TC-UI02: 響應式設計
+
+**驗證項目**:
+- [ ] 視窗最小尺寸 800x600 正常顯示
+- [ ] Sidebar 懸停展開/收合流暢
+- [ ] 主內容區域適應視窗大小
+- [ ] 卡片佈局在不同寬度下正確排列
+
+#### TC-UI03: 動畫效果
+
+**驗證項目**:
+- [ ] 頁面切換動畫流暢
+- [ ] Sidebar 展開動畫無延遲
+- [ ] 卡片 hover 效果正常
+- [ ] Loading skeleton 動畫顯示
+
+#### TC-UI04: 主題一致性
+
+**驗證項目**:
+- [ ] 深色主題配色統一
+- [ ] accent-cyan 用於主要互動元素
+- [ ] accent-rose 用於警告/徽章
+- [ ] 文字對比度符合可讀性標準
+
+#### TC-UI05: Toast 通知
+
+**驗證項目**:
+- [ ] 成功操作顯示綠色 toast
+- [ ] 錯誤操作顯示紅色 toast
+- [ ] Toast 自動消失（3 秒）
+- [ ] 多個 toast 正確堆疊
+
+---
+
+### 11. 鍵盤操作
+
+#### TC-KB01: 導航快捷鍵
+
+**驗證項目**:
+- [ ] Tab 鍵可遍歷所有互動元素
+- [ ] Enter 鍵可觸發按鈕操作
+- [ ] Escape 鍵可關閉對話框
+
+#### TC-KB02: 輸入欄位
+
+**驗證項目**:
+- [ ] TODO 輸入框按 Enter 送出
+- [ ] Chat 輸入框按 Enter 發送訊息
+- [ ] 搜尋欄位支援即時篩選
+
+---
+
 ## 整合測試
 
 ### IT-01: 完整工作流程
@@ -484,6 +550,60 @@ time npm run tauri dev
 - [ ] 更新包已簽名
 - [ ] 簽名驗證正確
 - [ ] 無法安裝未簽名更新
+
+---
+
+## 跨平台測試
+
+### CP-01: macOS (ARM / Intel)
+
+**測試環境**: macOS 13.0+ (Ventura 或更新)
+
+**驗證項目**:
+- [ ] 應用程式正確啟動
+- [ ] 視窗標題列樣式正確（Overlay 模式）
+- [ ] 系統選單整合正常
+- [ ] Keychain 存取正常（API Key 儲存）
+- [ ] 系統通知正確顯示
+- [ ] 自動更新下載安裝正常
+
+**特定測試**:
+- [ ] ARM (M1/M2): `Sixarms_aarch64.dmg` 安裝
+- [ ] Intel: `Sixarms_x64.dmg` 安裝
+
+### CP-02: Windows
+
+**測試環境**: Windows 10/11 (64-bit)
+
+**驗證項目**:
+- [ ] 安裝程式執行正常（`Sixarms_x64-setup.exe`）
+- [ ] 開始選單捷徑正確建立
+- [ ] 系統托盤通知正常
+- [ ] Windows Credential Manager 整合
+- [ ] 高 DPI 顯示正確縮放
+
+### CP-03: Linux
+
+**測試環境**: Ubuntu 22.04 / Fedora 38+
+
+**驗證項目**:
+- [ ] AppImage 執行正常
+- [ ] 桌面整合正常
+- [ ] 系統通知（libnotify）正常
+- [ ] 權限設定正確
+
+**安裝測試**:
+```bash
+# AppImage
+chmod +x Sixarms_0.1.0_amd64.AppImage
+./Sixarms_0.1.0_amd64.AppImage
+
+# Debian/Ubuntu
+sudo dpkg -i sixarms_0.1.0_amd64.deb
+
+# Fedora/RHEL
+sudo rpm -i Sixarms-0.1.0-1.x86_64.rpm
+```
 
 ---
 
