@@ -1,0 +1,207 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== 深夜工作室 Design System ===== */
+
+@layer base {
+  :root {
+    /* Typography */
+    --font-display: 'JetBrains Mono', monospace;
+    --font-body: 'IBM Plex Sans', system-ui, sans-serif;
+    --font-mono: 'Space Mono', monospace;
+
+    /* Size Scale (modular: 1.25 ratio) */
+    --text-xs: 0.64rem;
+    --text-sm: 0.8rem;
+    --text-base: 1rem;
+    --text-lg: 1.25rem;
+    --text-xl: 1.563rem;
+    --text-2xl: 1.953rem;
+    --text-3xl: 2.441rem;
+
+    /* Base - 深色系 */
+    --bg-void: #0a0a0b;
+    --bg-primary: #111113;
+    --bg-secondary: #18181b;
+    --bg-elevated: #1f1f23;
+
+    /* Border */
+    --border-subtle: #27272a;
+    --border-default: #3f3f46;
+
+    /* Text */
+    --text-primary: #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-muted: #52525b;
+
+    /* Accent - 霓虹系 */
+    --accent-cyan: #22d3ee;
+    --accent-green: #4ade80;
+    --accent-amber: #fbbf24;
+    --accent-rose: #fb7185;
+    --accent-violet: #a78bfa;
+
+    /* Glow effects */
+    --glow-cyan: 0 0 20px rgba(34, 211, 238, 0.3);
+    --glow-green: 0 0 20px rgba(74, 222, 128, 0.3);
+    --glow-amber: 0 0 20px rgba(251, 191, 36, 0.3);
+    --glow-rose: 0 0 20px rgba(251, 113, 133, 0.3);
+    --glow-violet: 0 0 20px rgba(167, 139, 250, 0.3);
+  }
+
+  * {
+    @apply border-border-subtle;
+  }
+
+  body {
+    @apply bg-void text-text-primary font-body;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg-void);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-default);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+  }
+}
+
+@layer components {
+  /* 主背景 - 微網格 */
+  .app-background {
+    background-color: var(--bg-void);
+    background-image:
+      linear-gradient(rgba(34, 211, 238, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34, 211, 238, 0.02) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* CRT 掃描線效果 (可選，輕微) */
+  .crt-overlay {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.05) 0px,
+      rgba(0, 0, 0, 0.05) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    z-index: 9999;
+  }
+
+  /* Card 組件 */
+  .card {
+    @apply bg-bg-secondary border border-border-subtle rounded;
+    box-shadow:
+      0 0 0 1px rgba(34, 211, 238, 0.05),
+      0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  .card:hover {
+    @apply border-accent-cyan;
+    box-shadow:
+      0 0 0 1px rgba(34, 211, 238, 0.2),
+      var(--glow-cyan),
+      0 8px 24px rgba(0, 0, 0, 0.5);
+    transform: translateY(-2px);
+    transition: all 0.15s ease-out;
+  }
+
+  /* AI 訊息氣泡 */
+  .ai-bubble {
+    position: relative;
+    background: linear-gradient(
+      135deg,
+      rgba(34, 211, 238, 0.1) 0%,
+      rgba(34, 211, 238, 0.05) 100%
+    );
+    border-left: 2px solid var(--accent-cyan);
+  }
+
+  .ai-bubble::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--accent-cyan),
+      transparent
+    );
+  }
+
+  /* 終端機風格輸入框 */
+  .terminal-input {
+    @apply bg-bg-primary border border-border-subtle rounded px-4 py-3;
+    @apply text-text-primary font-mono;
+    @apply focus:outline-none focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan/30;
+  }
+
+  .terminal-input::placeholder {
+    @apply text-text-muted;
+  }
+
+  /* AI 脈動指示器 */
+  .ai-indicator {
+    animation: pulse-glow 2s infinite;
+  }
+
+  /* 閃爍光標 */
+  .cursor-blink::after {
+    content: '█';
+    animation: blink 1s infinite;
+    @apply text-accent-cyan ml-0.5;
+  }
+
+  /* 錯開載入動畫 */
+  .stagger-item {
+    animation: stagger-in 0.4s ease-out both;
+  }
+  .stagger-item:nth-child(1) { animation-delay: 0ms; }
+  .stagger-item:nth-child(2) { animation-delay: 50ms; }
+  .stagger-item:nth-child(3) { animation-delay: 100ms; }
+  .stagger-item:nth-child(4) { animation-delay: 150ms; }
+  .stagger-item:nth-child(5) { animation-delay: 200ms; }
+
+  /* Section Header */
+  .section-header {
+    @apply font-display font-bold uppercase tracking-wider text-text-primary;
+    letter-spacing: 0.05em;
+  }
+
+  /* 狀態顏色 */
+  .status-active { @apply text-accent-green; }
+  .status-slow { @apply text-accent-amber; }
+  .status-stale { @apply text-accent-rose; }
+  .status-ai { @apply text-accent-cyan; }
+  .status-milestone { @apply text-accent-violet; }
+
+  /* 發光效果 */
+  .glow-cyan { box-shadow: var(--glow-cyan); }
+  .glow-green { box-shadow: var(--glow-green); }
+  .glow-amber { box-shadow: var(--glow-amber); }
+  .glow-rose { box-shadow: var(--glow-rose); }
+  .glow-violet { box-shadow: var(--glow-violet); }
+}
+
+@layer utilities {
+  /* Animation keyframes are in Tailwind config */
+}

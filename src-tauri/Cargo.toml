@@ -1,0 +1,54 @@
+[package]
+name = "sixarms"
+version = "0.1.0"
+description = "AI-powered development progress tracking assistant"
+authors = ["chuisiufai"]
+license = "MIT"
+repository = ""
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "sixarms_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.5.3", features = [] }
+
+[dependencies]
+# Tauri
+tauri = { version = "2.9.4", features = [] }
+tauri-plugin-log = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-dialog = "2"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Async runtime
+tokio = { version = "1", features = ["full"] }
+
+# Database
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+# HTTP client for Grok API
+reqwest = { version = "0.12", features = ["json"] }
+
+# Date/Time
+chrono = { version = "0.4", features = ["serde"] }
+
+# Utilities
+log = "0.4"
+thiserror = "1.0"
+uuid = { version = "1.0", features = ["v4", "serde"] }
+dirs = "5.0"
+regex = "1.10"
+
+# macOS Keychain
+[target.'cfg(target_os = "macos")'.dependencies]
+security-framework = "2.11"
+
+[dev-dependencies]
+tempfile = "3"

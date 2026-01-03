@@ -1,0 +1,103 @@
+mod commands;
+mod db;
+mod grok;
+mod grok_commands;
+mod keychain;
+mod models;
+mod scanner;
+mod scanner_commands;
+
+use db::Database;
+use grok::GrokClient;
+use keychain::Keychain;
+use scanner::GitScanner;
+use tauri::Manager;
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .setup(|app| {
+            // Initialize database
+            let app_data_dir = app
+                .path()
+                .app_data_dir()
+                .expect("Failed to get app data directory");
+
+            let db = Database::new(app_data_dir).expect("Failed to initialize database");
+            app.manage(db);
+
+            // Initialize Grok client
+            let grok_client = GrokClient::new();
+
+            // Try to load API key from keychain
+            let keychain = Keychain::new();
+            if let Ok(Some(key)) = keychain.get_api_key() {
+                let client = grok_client.clone();
+                tauri::async_runtime::spawn(async move {
+                    client.set_api_key(key).await;
+                });
+            }
+
+            app.manage(grok_client);
+            app.manage(keychain);
+
+            // Initialize scanner
+            let scanner = GitScanner::new();
+            app.manage(scanner);
+
+            // Setup logging in debug mode
+            if cfg!(debug_assertions) {
+                app.handle().plugin(
+                    tauri_plugin_log::Builder::default()
+                        .level(log::LevelFilter::Info)
+                        .build(),
+                )?;
+            }
+
+            Ok(())
+        })
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_dialog::init())
+        .invoke_handler(tauri::generate_handler![
+            // Database commands
+            commands::get_projects,
+            commands::create_project,
+            commands::update_project_status,
+            commands::delete_project,
+            commands::get_daily_logs,
+            commands::create_daily_log,
+            commands::get_todos,
+            commands::create_todo,
+            commands::update_todo_status,
+            commands::delete_todo,
+            commands::get_inbox_items,
+            commands::answer_inbox_item,
+            commands::create_inbox_item,
+            commands::get_chat_messages,
+            commands::create_chat_message,
+            commands::get_settings,
+            commands::save_settings,
+            commands::get_activity_stats,
+            commands::get_category_distribution,
+            commands::health_check,
+            // Grok commands
+            grok_commands::set_api_key,
+            grok_commands::has_api_key,
+            grok_commands::delete_api_key,
+            grok_commands::chat_with_grok,
+            grok_commands::classify_with_grok,
+            grok_commands::generate_summary_with_grok,
+            grok_commands::send_grok_messages,
+            // Scanner commands
+            scanner_commands::scan_today,
+            scanner_commands::scan_range,
+            scanner_commands::get_uncommitted,
+            scanner_commands::get_recent_commits,
+            scanner_commands::get_current_branch,
+            scanner_commands::is_git_repo,
+            scanner_commands::format_changes,
+        ])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
