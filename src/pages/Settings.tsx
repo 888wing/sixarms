@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, DragEvent } from "react";
 import { motion } from "framer-motion";
-import { Key, FolderOpen, Bell, Eye, EyeOff, Plus, X, Check, Loader2, Upload } from "lucide-react";
+import { Key, FolderOpen, Bell, Eye, EyeOff, Plus, X, Check, Loader2, Upload, Timer, Bot, Play } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
 import { useProjectStore } from "../stores/projectStore";
 import { useSettingsStore } from "../stores/settingsStore";
@@ -30,20 +30,25 @@ export function Settings() {
   const {
     settings,
     hasApiKey,
+    schedulerStatus,
     loading: settingsLoading,
     saved,
     fetchSettings,
     saveSettings,
     updateNotifications,
+    updateScan,
     setApiKey: saveApiKey,
     checkApiKey,
+    fetchSchedulerStatus,
+    triggerManualScan,
   } = useSettingsStore();
 
   useEffect(() => {
     fetchProjects();
     fetchSettings();
     checkApiKey();
-  }, [fetchProjects, fetchSettings, checkApiKey]);
+    fetchSchedulerStatus();
+  }, [fetchProjects, fetchSettings, checkApiKey, fetchSchedulerStatus]);
 
   const handleSaveApiKey = async () => {
     if (apiKey.trim()) {
@@ -143,6 +148,19 @@ export function Settings() {
 
   const handleNotificationChange = (key: keyof typeof settings.notifications) => {
     updateNotifications({ [key]: !settings.notifications[key] });
+  };
+
+  const handleScanChange = (key: keyof typeof settings.scan, value: boolean | number) => {
+    updateScan({ [key]: value });
+  };
+
+  const handleManualScan = async () => {
+    try {
+      await triggerManualScan();
+      toast.success("手動掃描已觸發");
+    } catch {
+      toast.error("手動掃描失敗");
+    }
   };
 
   return (
@@ -429,6 +447,169 @@ export function Settings() {
               </button>
             </div>
           ))}
+        </div>
+      </motion.section>
+
+      {/* Scan Settings Section */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.35 }}
+        className="card p-6 mb-6"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Timer size={18} className="text-accent-cyan" />
+            <h2 className="section-header text-lg">AUTO SCAN</h2>
+            {schedulerStatus?.is_running && (
+              <span className="text-xs bg-accent-green/20 text-accent-green px-2 py-0.5 rounded flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-accent-green rounded-full animate-pulse" />
+                運行中
+              </span>
+            )}
+          </div>
+          <button
+            onClick={handleManualScan}
+            disabled={settingsLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-accent-cyan hover:bg-accent-cyan/10 rounded transition-colors"
+          >
+            {settingsLoading ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
+            手動掃描
+          </button>
+        </div>
+
+        {schedulerStatus?.last_scan && (
+          <p className="text-text-muted text-xs mb-4">
+            上次掃描：{new Date(schedulerStatus.last_scan).toLocaleString('zh-HK')}
+          </p>
+        )}
+
+        <div className="space-y-4">
+          {/* Enable Auto Scan Toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-text-primary text-sm">啟用自動掃描</p>
+              <p className="text-text-muted text-xs">定時掃描專案並分析改動</p>
+            </div>
+            <button
+              onClick={() => handleScanChange("enabled", !settings.scan.enabled)}
+              className={`
+                w-12 h-6 rounded-full transition-all relative
+                ${settings.scan.enabled
+                  ? "bg-accent-cyan"
+                  : "bg-bg-elevated border border-border-subtle"
+                }
+              `}
+            >
+              <span
+                className={`
+                  absolute top-1 w-4 h-4 rounded-full bg-white transition-all
+                  ${settings.scan.enabled ? "left-7" : "left-1"}
+                `}
+              />
+            </button>
+          </div>
+
+          {/* Scan Interval */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-text-primary text-sm">掃描間隔</p>
+              <p className="text-text-muted text-xs">每隔幾分鐘掃描一次</p>
+            </div>
+            <select
+              value={settings.scan.interval_minutes}
+              onChange={(e) => handleScanChange("interval_minutes", parseInt(e.target.value))}
+              className="bg-bg-primary text-text-secondary text-sm border border-border-subtle rounded px-3 py-1.5"
+            >
+              <option value={15}>15 分鐘</option>
+              <option value={30}>30 分鐘</option>
+              <option value={60}>1 小時</option>
+              <option value={120}>2 小時</option>
+            </select>
+          </div>
+
+          {/* Scan on Startup Toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-text-primary text-sm">啟動時掃描</p>
+              <p className="text-text-muted text-xs">App 啟動時自動掃描所有專案</p>
+            </div>
+            <button
+              onClick={() => handleScanChange("scan_on_startup", !settings.scan.scan_on_startup)}
+              className={`
+                w-12 h-6 rounded-full transition-all relative
+                ${settings.scan.scan_on_startup
+                  ? "bg-accent-cyan"
+                  : "bg-bg-elevated border border-border-subtle"
+                }
+              `}
+            >
+              <span
+                className={`
+                  absolute top-1 w-4 h-4 rounded-full bg-white transition-all
+                  ${settings.scan.scan_on_startup ? "left-7" : "left-1"}
+                `}
+              />
+            </button>
+          </div>
+
+          {/* AI Features Header */}
+          <div className="pt-4 border-t border-border-subtle">
+            <div className="flex items-center gap-2 mb-4">
+              <Bot size={16} className="text-accent-purple" />
+              <p className="text-text-primary text-sm font-medium">AI 功能</p>
+            </div>
+
+            {/* Auto Classify Toggle */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-text-primary text-sm">自動分類</p>
+                <p className="text-text-muted text-xs">AI 自動分類改動類型（feature/bugfix/refactor...）</p>
+              </div>
+              <button
+                onClick={() => handleScanChange("auto_classify", !settings.scan.auto_classify)}
+                className={`
+                  w-12 h-6 rounded-full transition-all relative
+                  ${settings.scan.auto_classify
+                    ? "bg-accent-purple"
+                    : "bg-bg-elevated border border-border-subtle"
+                  }
+                `}
+              >
+                <span
+                  className={`
+                    absolute top-1 w-4 h-4 rounded-full bg-white transition-all
+                    ${settings.scan.auto_classify ? "left-7" : "left-1"}
+                  `}
+                />
+              </button>
+            </div>
+
+            {/* Auto Summarize Toggle */}
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-text-primary text-sm">自動摘要</p>
+                <p className="text-text-muted text-xs">AI 自動生成每日工作摘要</p>
+              </div>
+              <button
+                onClick={() => handleScanChange("auto_summarize", !settings.scan.auto_summarize)}
+                className={`
+                  w-12 h-6 rounded-full transition-all relative
+                  ${settings.scan.auto_summarize
+                    ? "bg-accent-purple"
+                    : "bg-bg-elevated border border-border-subtle"
+                  }
+                `}
+              >
+                <span
+                  className={`
+                    absolute top-1 w-4 h-4 rounded-full bg-white transition-all
+                    ${settings.scan.auto_summarize ? "left-7" : "left-1"}
+                  `}
+                />
+              </button>
+            </div>
+          </div>
         </div>
       </motion.section>
 
