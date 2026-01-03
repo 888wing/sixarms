@@ -9,19 +9,21 @@ import {
   CheckCircle,
   Circle,
   ChevronRight,
-  Loader2,
   FolderOpen,
 } from "lucide-react";
 import { useProjectStore } from "../stores/projectStore";
 import { useTodoStore } from "../stores/todoStore";
 import { useInboxStore } from "../stores/inboxStore";
+import { useToast } from "../components/Toast";
+import { SkeletonInboxItem, SkeletonTodoItem, SkeletonProjectItem } from "../components/Skeleton";
 
 export function Home() {
   const navigate = useNavigate();
   const [newTodoTitle, setNewTodoTitle] = useState("");
   const [showNewTodo, setShowNewTodo] = useState(false);
 
-  const { projects, fetchProjects } = useProjectStore();
+  const toast = useToast();
+  const { projects, loading: projectsLoading, fetchProjects } = useProjectStore();
   const {
     todos,
     loading: todosLoading,
@@ -57,6 +59,7 @@ export function Home() {
   const handleToggleTodo = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === "completed" ? "pending" : "completed";
     await updateTodoStatus(id, newStatus as "pending" | "completed");
+    toast.success(newStatus === "completed" ? "任務已完成" : "任務已恢復");
   };
 
   const handleCreateTodo = async () => {
@@ -64,10 +67,12 @@ export function Home() {
     await createTodo(newTodoTitle);
     setNewTodoTitle("");
     setShowNewTodo(false);
+    toast.success("TODO 已新增");
   };
 
   const handleAnswerInbox = async (id: string, answer: string) => {
     await answerItem(id, answer);
+    toast.success("已回答");
   };
 
   return (
@@ -109,13 +114,18 @@ export function Home() {
         </div>
 
         {inboxLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 size={24} className="animate-spin text-accent-cyan" />
+          <div className="space-y-4">
+            {[1, 2].map((i) => (
+              <SkeletonInboxItem key={i} />
+            ))}
           </div>
         ) : pendingInbox.length === 0 ? (
-          <div className="text-center py-8 text-text-muted">
-            <div className="text-2xl mb-2">✨</div>
-            <p>冇待處理嘅問題</p>
+          <div className="text-center py-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent-green/10 mb-4">
+              <span className="text-3xl">✨</span>
+            </div>
+            <p className="text-text-primary font-medium mb-1">所有問題已處理完畢</p>
+            <p className="text-text-muted text-sm">AI Agent 會喺有新問題時通知你</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -149,15 +159,27 @@ export function Home() {
               Manage <ChevronRight size={14} />
             </button>
           </div>
-          {activeProjects.length === 0 ? (
-            <div className="text-center py-8 text-text-muted">
-              <FolderOpen size={32} className="mx-auto mb-2 opacity-50" />
-              <p>未有活躍專案</p>
+          {projectsLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <SkeletonProjectItem key={i} />
+              ))}
+            </div>
+          ) : activeProjects.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent-cyan/10 mb-4">
+                <FolderOpen size={28} className="text-accent-cyan" />
+              </div>
+              <p className="text-text-primary font-medium mb-1">開始追蹤你嘅專案</p>
+              <p className="text-text-muted text-sm mb-4">新增專案嚟記錄每日開發進度</p>
               <button
                 onClick={() => navigate("/settings")}
-                className="mt-2 text-accent-cyan text-sm hover:underline"
+                className="px-4 py-2 bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/50 rounded text-sm hover:bg-accent-cyan/30 transition-colors"
               >
-                新增專案
+                <span className="flex items-center gap-2">
+                  <Plus size={16} />
+                  新增專案
+                </span>
               </button>
             </div>
           ) : (
@@ -197,14 +219,20 @@ export function Home() {
         >
           <h2 className="section-header text-lg mb-4">TODAY'S TODOS</h2>
           {todosLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 size={24} className="animate-spin text-accent-cyan" />
+            <div className="space-y-2">
+              {[1, 2, 3, 4].map((i) => (
+                <SkeletonTodoItem key={i} />
+              ))}
             </div>
           ) : (
             <div className="space-y-2">
               {todayTodos.length === 0 && !showNewTodo ? (
-                <div className="text-center py-4 text-text-muted">
-                  <p>今日未有 TODO</p>
+                <div className="text-center py-6">
+                  <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-accent-amber/10 mb-3">
+                    <CheckCircle size={24} className="text-accent-amber" />
+                  </div>
+                  <p className="text-text-primary font-medium mb-1">今日未有待辦事項</p>
+                  <p className="text-text-muted text-sm">點擊下方按鈕新增 TODO</p>
                 </div>
               ) : (
                 todayTodos.map((todo, index) => (

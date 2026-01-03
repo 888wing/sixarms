@@ -5,6 +5,7 @@ import { open } from "@tauri-apps/plugin-dialog";
 import { useProjectStore } from "../stores/projectStore";
 import { useSettingsStore } from "../stores/settingsStore";
 import { useToast } from "../components/Toast";
+import { SkeletonProjectItem } from "../components/Skeleton";
 import type { ProjectStatus } from "../lib/types";
 
 export function Settings() {
@@ -132,10 +133,12 @@ export function Settings() {
 
   const handleStatusChange = async (id: string, status: string) => {
     await updateProjectStatus(id, status as ProjectStatus);
+    toast.success("專案狀態已更新");
   };
 
   const handleDeleteProject = async (id: string) => {
     await deleteProject(id);
+    toast.success("專案已刪除");
   };
 
   const handleNotificationChange = (key: keyof typeof settings.notifications) => {
@@ -242,26 +245,71 @@ export function Settings() {
                 placeholder="專案名稱"
                 className="terminal-input w-full"
               />
-              <input
-                type="text"
-                value={newProjectPath}
-                onChange={(e) => setNewProjectPath(e.target.value)}
-                placeholder="專案路徑 (e.g., /Users/you/projects/myapp)"
-                className="terminal-input w-full font-mono text-sm"
-              />
-              <div className="flex justify-end gap-2">
+
+              {/* Folder Path with Browse and Drag-Drop */}
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`
+                  relative rounded border-2 border-dashed transition-all
+                  ${isDragOver
+                    ? "border-accent-cyan bg-accent-cyan/10"
+                    : "border-border-subtle hover:border-accent-cyan/50"
+                  }
+                `}
+              >
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newProjectPath}
+                    onChange={(e) => setNewProjectPath(e.target.value)}
+                    placeholder="拖放資料夾或點擊瀏覽..."
+                    className="terminal-input flex-1 border-0 bg-transparent"
+                  />
+                  <button
+                    onClick={handleBrowseFolder}
+                    type="button"
+                    className="flex items-center gap-1.5 px-3 py-2 mr-1 text-sm text-accent-cyan hover:bg-accent-cyan/10 rounded transition-colors"
+                  >
+                    <FolderOpen size={16} />
+                    瀏覽
+                  </button>
+                </div>
+
+                {/* Drag overlay */}
+                {isDragOver && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-accent-cyan/10 rounded pointer-events-none">
+                    <div className="flex items-center gap-2 text-accent-cyan">
+                      <Upload size={20} />
+                      <span className="text-sm font-medium">放開以選擇資料夾</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-text-muted text-xs flex items-center gap-1">
+                <span>💡</span>
+                <span>你可以拖放資料夾到上方，或者點擊「瀏覽」按鈕選擇</span>
+              </p>
+
+              <div className="flex justify-end gap-2 pt-2">
                 <button
-                  onClick={() => setShowAddProject(false)}
-                  className="px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary"
+                  onClick={() => {
+                    setShowAddProject(false);
+                    setNewProjectName("");
+                    setNewProjectPath("");
+                  }}
+                  className="px-3 py-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
                 >
                   取消
                 </button>
                 <button
                   onClick={handleAddProject}
                   disabled={!newProjectName.trim() || !newProjectPath.trim()}
-                  className="px-3 py-1.5 text-sm bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/50 rounded hover:bg-accent-cyan/30 disabled:opacity-50"
+                  className="px-3 py-1.5 text-sm bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/50 rounded hover:bg-accent-cyan/30 disabled:opacity-50 transition-colors"
                 >
-                  新增
+                  新增專案
                 </button>
               </div>
             </div>
@@ -269,13 +317,27 @@ export function Settings() {
         )}
 
         {projectsLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 size={24} className="animate-spin text-accent-cyan" />
+          <div className="space-y-2">
+            {[1, 2, 3].map((i) => (
+              <SkeletonProjectItem key={i} />
+            ))}
           </div>
         ) : projects.length === 0 ? (
-          <div className="text-center py-8 text-text-muted">
-            <FolderOpen size={32} className="mx-auto mb-2 opacity-50" />
-            <p>仲未有專案</p>
+          <div className="text-center py-8">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-accent-cyan/10 mb-4">
+              <FolderOpen size={28} className="text-accent-cyan" />
+            </div>
+            <p className="text-text-primary font-medium mb-1">仲未有專案</p>
+            <p className="text-text-muted text-sm mb-4">新增專案開始追蹤你嘅開發進度</p>
+            <button
+              onClick={() => setShowAddProject(true)}
+              className="px-4 py-2 bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/50 rounded text-sm hover:bg-accent-cyan/30 transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <Plus size={16} />
+                新增專案
+              </span>
+            </button>
           </div>
         ) : (
           <div className="space-y-2">

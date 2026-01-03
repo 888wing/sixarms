@@ -1100,6 +1100,808 @@ dev-tracker/
 
 ---
 
+---
+
+## ⚡ Quick Entry 視窗：快捷輸入
+
+### 設計理念
+
+> 終端機風格的浮動輸入視窗，隨時捕捉想法
+
+**觸發方式**：全局快捷鍵 `⌘ + Shift + D`
+
+### UI 設計
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─ QUICK ENTRY ─────────────────────────────────── ⌘⇧D ─────┐ │
+│  │                                                            │ │
+│  │  > █                                                       │ │
+│  │                                                            │ │
+│  │  ─────────────────────────────────────────────────────── │ │
+│  │                                                            │ │
+│  │  PROJECT: [ PeakShift-Overdrive ▼ ]                       │ │
+│  │                                                            │ │
+│  │  TYPE:  ⟨ 💬 LOG ⟩  ⟨ ✅ TODO ⟩  ⟨ 💡 IDEA ⟩  ⟨ 🐛 BUG ⟩   │ │
+│  │          ▔▔▔▔▔▔▔                                          │ │
+│  │                                                            │ │
+│  └────────────────────────────────────────────────── [ ⌘↵ ] ─┘ │
+│                                                                 │
+│░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░│
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 快捷鍵
+
+| 快捷鍵 | 功能 |
+|--------|------|
+| `⌘ + Shift + D` | 開啟/關閉 Quick Entry |
+| `⌘ + Enter` | 送出 |
+| `Esc` | 取消並關閉 |
+| `⌘ + 1/2/3/4` | 快速選擇類型 |
+| `Tab` | 切換專案選擇 |
+
+### CSS 樣式
+
+```css
+/* Quick Entry 視窗 - 終端機風格 */
+.quick-entry-window {
+  background: var(--bg-void);
+  border: 1px solid var(--accent-cyan);
+  box-shadow:
+    var(--glow-cyan),
+    0 0 60px rgba(34, 211, 238, 0.15),
+    inset 0 0 80px rgba(34, 211, 238, 0.03);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* 頂部掃描線裝飾 */
+.quick-entry-window::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--accent-cyan) 0px,
+    var(--accent-cyan) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  animation: scan-line 2s linear infinite;
+}
+
+/* 終端機風格輸入 */
+.quick-entry-input {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  caret-color: var(--accent-cyan);
+}
+
+.quick-entry-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* 類型選擇按鈕 - 發光標籤 */
+.type-button {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  padding: 8px 16px;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.type-button:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+.type-button.selected {
+  border-color: var(--accent-cyan);
+  background: rgba(34, 211, 238, 0.1);
+  box-shadow: var(--glow-cyan);
+  color: var(--accent-cyan);
+}
+
+.type-button.selected::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 20%;
+  right: 20%;
+  height: 2px;
+  background: var(--accent-cyan);
+}
+
+@keyframes scan-line {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+```
+
+---
+
+## 📋 Kanban 看板：數據監控台風格
+
+### 設計理念
+
+> 將傳統看板升級為終端機監控台風格
+
+### UI 設計
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  ┌─ KANBAN ─────────────────────────────────────────────── ⌘K ────────┐ │
+│  │                                                                     │ │
+│  │  ╔══════════════════╦══════════════════╦══════════════════╗        │ │
+│  │  ║ ▓ BACKLOG    [5] ║ ▓ IN_PROG    [2] ║ ▓ DONE      [12] ║        │ │
+│  │  ╠══════════════════╬══════════════════╬══════════════════╣        │ │
+│  │  ║                  ║                  ║                  ║        │ │
+│  │  ║ ┌──────────────┐ ║ ┌──────────────┐ ║ ┌──────────────┐ ║        │ │
+│  │  ║ │▌音效系統     │ ║ │▌登入頁 UI   │ ║ │░ 卡牌動畫    │ ║        │ │
+│  │  ║ │ #PeakShift   │ ║ │ #PeakShift   │ ║ │ #PeakShift   │ ║        │ │
+│  │  ║ │ ────────────│ ║ │ ────────────│ ║ │ ────────────│ ║        │ │
+│  │  ║ │ ◆ Feature    │ ║ │ ◆ UI        │ ║ │ ✓ 2hr ago    │ ║        │ │
+│  │  ║ │ ⚠ +3d stale │ ║ │ ⏱ 45min     │ ║ │              │ ║        │ │
+│  │  ║ └──────────────┘ ║ └──────────────┘ ║ └──────────────┘ ║        │ │
+│  │  ║                  ║                  ║                  ║        │ │
+│  │  ║ ┌──────────────┐ ║ ┌──────────────┐ ║        ·         ║        │ │
+│  │  ║ │▌成就系統     │ ║ │▌計分 Bug    │ ║        ·         ║        │ │
+│  │  ║ │ #PeakShift   │ ║ │ #PeakShift   │ ║        ·         ║        │ │
+│  │  ║ │ ────────────│ ║ │ ────────────│ ║                  ║        │ │
+│  │  ║ │ ◆ Feature    │ ║ │ ◆ BugFix    │ ║                  ║        │ │
+│  │  ║ └──────────────┘ ║ └──────────────┘ ║                  ║        │ │
+│  │  ║                  ║                  ║                  ║        │ │
+│  │  ╚══════════════════╩══════════════════╩══════════════════╝        │ │
+│  │                                                                     │ │
+│  │  [ FILTER: ALL ▼ ]  [ SORT: UPDATED ▼ ]  [ + NEW TASK ]            │ │
+│  │                                                                     │ │
+│  └─────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### CSS 樣式
+
+```css
+/* Kanban 欄位 - 終端機風格邊框 */
+.kanban-column {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  position: relative;
+}
+
+.kanban-column::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent-cyan);
+  opacity: 0.5;
+}
+
+.kanban-column.backlog::before { background: var(--text-muted); }
+.kanban-column.in-progress::before { background: var(--accent-amber); }
+.kanban-column.done::before { background: var(--accent-green); }
+
+/* 欄位標題 - 監控台風格 */
+.kanban-column-header {
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanban-column-header .count {
+  font-family: var(--font-mono);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: var(--text-xs);
+}
+
+/* Kanban 卡片 - 數據卡風格 */
+.kanban-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent-cyan);
+  padding: 12px;
+  margin: 8px;
+  position: relative;
+  transition: all 0.2s ease;
+  cursor: grab;
+}
+
+.kanban-card::before {
+  content: '▌';
+  position: absolute;
+  left: -3px;
+  top: 8px;
+  color: var(--accent-cyan);
+  font-size: 10px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.kanban-card:hover::before {
+  opacity: 1;
+}
+
+.kanban-card:hover {
+  border-color: var(--accent-cyan);
+  transform: translateX(4px);
+  box-shadow:
+    -4px 0 0 var(--accent-cyan),
+    var(--glow-cyan);
+}
+
+/* 卡片內分隔線 */
+.kanban-card-divider {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    var(--border-subtle) 0%,
+    transparent 100%
+  );
+  margin: 8px 0;
+}
+
+/* 標籤 - 方塊風格 */
+.kanban-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  padding: 2px 6px;
+  background: rgba(34, 211, 238, 0.1);
+  border: 1px solid rgba(34, 211, 238, 0.3);
+  color: var(--accent-cyan);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.kanban-label::before {
+  content: '◆';
+  font-size: 8px;
+}
+
+.kanban-label.feature {
+  background: rgba(167, 139, 250, 0.1);
+  border-color: rgba(167, 139, 250, 0.3);
+  color: var(--accent-violet);
+}
+
+.kanban-label.bugfix {
+  background: rgba(251, 113, 133, 0.1);
+  border-color: rgba(251, 113, 133, 0.3);
+  color: var(--accent-rose);
+}
+
+.kanban-label.ui {
+  background: rgba(34, 211, 238, 0.1);
+  border-color: rgba(34, 211, 238, 0.3);
+  color: var(--accent-cyan);
+}
+
+/* 停滯警告 */
+.kanban-card.stale {
+  border-left-color: var(--accent-amber);
+}
+
+.stale-indicator {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--accent-amber);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stale-indicator::before {
+  content: '⚠';
+}
+
+/* 拖放狀態 */
+.kanban-card.dragging {
+  opacity: 0.9;
+  transform: rotate(2deg) scale(1.02);
+  box-shadow:
+    0 0 0 2px var(--accent-cyan),
+    var(--glow-cyan),
+    0 20px 40px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  cursor: grabbing;
+}
+
+.kanban-column.drop-target {
+  background: rgba(34, 211, 238, 0.05);
+  border-color: var(--accent-cyan);
+}
+```
+
+---
+
+## 🔔 Toast 通知：終端機日誌風格
+
+### 設計理念
+
+> 將通知設計成終端機日誌輸出風格
+
+### UI 設計
+
+```
+┌─ NOTIFICATION ──────────────────────────────────────────┐
+│                                                         │
+│  [12:34:56] ✓ SCAN_COMPLETE                            │
+│  │ PeakShift: 12 files changed (+847/-123)             │
+│  │                                                      │
+│  └─────────────────────────────── [ VIEW ] [ DISMISS ] │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 通知類型
+
+| 類型 | 符號 | 顏色 |
+|------|------|------|
+| 成功 | `✓` | `--accent-green` |
+| 警告 | `⚠` | `--accent-amber` |
+| 錯誤 | `✗` | `--accent-rose` |
+| AI | `◈` | `--accent-cyan` |
+| 資訊 | `ℹ` | `--text-secondary` |
+
+### CSS 樣式
+
+```css
+/* Toast 通知 - 終端機日誌風格 */
+.toast {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent-cyan);
+  padding: 0;
+  font-family: var(--font-mono);
+  min-width: 360px;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.5),
+    var(--glow-cyan);
+  animation: toast-slide-in 0.3s ease-out;
+}
+
+.toast.success { border-left-color: var(--accent-green); }
+.toast.warning { border-left-color: var(--accent-amber); }
+.toast.error { border-left-color: var(--accent-rose); }
+.toast.ai { border-left-color: var(--accent-cyan); }
+
+.toast-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: var(--text-sm);
+}
+
+.toast-timestamp {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.toast-type {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-green);
+}
+
+.toast-type.warning { color: var(--accent-amber); }
+.toast-type.error { color: var(--accent-rose); }
+.toast-type.ai { color: var(--accent-cyan); }
+
+.toast-body {
+  padding: 12px 16px;
+  padding-left: 24px;
+  position: relative;
+  color: var(--text-secondary);
+}
+
+.toast-body::before {
+  content: '│';
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  bottom: 12px;
+  color: var(--border-default);
+}
+
+.toast-actions {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px;
+  justify-content: flex-end;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.toast-action {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  padding: 4px 12px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.toast-action:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+  }
+}
+
+/* 進度條 (自動消失倒計時) */
+.toast-progress {
+  height: 2px;
+  background: var(--accent-cyan);
+  animation: toast-countdown 5s linear forwards;
+}
+
+@keyframes toast-countdown {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+```
+
+---
+
+## 📟 Slash 指令回應：終端機輸出風格
+
+### 設計理念
+
+> 指令回應模擬終端機輸出，資訊層次清晰
+
+### UI 設計
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  > /status                                              │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ╔═ TODAY'S STATUS ════════════════════════════════════╗│
+│  ║                                                     ║│
+│  ║  PROJECTS ACTIVE     3                              ║│
+│  ║  FILES CHANGED      47                              ║│
+│  ║  LINES ADDED      +892                              ║│
+│  ║  LINES REMOVED    -234                              ║│
+│  ║  TODOS COMPLETED     4                              ║│
+│  ║  INBOX PENDING       2                              ║│
+│  ║                                                     ║│
+│  ╚═════════════════════════════════════════════════════╝│
+│                                                         │
+│  ┌─ TOP ACTIVITY ──────────────────────────────────────┐│
+│  │ ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ PeakShift      (+623)             ││
+│  │ ▓▓▓▓▓░░░░░░░░░░░ Portfolio      (+187)             ││
+│  │ ▓▓░░░░░░░░░░░░░░ SideProject    (+82)              ││
+│  └─────────────────────────────────────────────────────┘│
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+### CSS 樣式
+
+```css
+/* Slash 指令回應 - 終端機輸出 */
+.command-response {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  margin: 16px 0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.command-input {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--accent-cyan);
+  font-size: var(--text-sm);
+}
+
+.command-input::before {
+  content: '> ';
+  opacity: 0.5;
+}
+
+.command-output {
+  padding: 16px;
+}
+
+/* ASCII 框線表格 */
+.ascii-box {
+  border: 1px solid var(--accent-cyan);
+  position: relative;
+  padding: 16px;
+  margin: 8px 0;
+}
+
+.ascii-box-title {
+  position: absolute;
+  top: -1px;
+  left: 12px;
+  background: var(--bg-primary);
+  padding: 0 8px;
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-cyan);
+  transform: translateY(-50%);
+}
+
+/* 數據行 */
+.data-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px dotted var(--border-subtle);
+}
+
+.data-row:last-child {
+  border-bottom: none;
+}
+
+.data-label {
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-size: var(--text-xs);
+  letter-spacing: 0.05em;
+}
+
+.data-value {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.data-value.positive { color: var(--accent-green); }
+.data-value.negative { color: var(--accent-rose); }
+
+/* 進度條 - 方塊風格 */
+.block-progress {
+  display: flex;
+  gap: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+}
+
+.block-progress .filled {
+  color: var(--accent-cyan);
+}
+
+.block-progress .empty {
+  color: var(--border-subtle);
+}
+```
+
+---
+
+## ✨ 擴展動效系統
+
+### 新增動畫
+
+```css
+/* 掃描進行中動畫 */
+@keyframes scanning {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 200% 0%; }
+}
+
+.scanning-indicator {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--accent-cyan) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: scanning 1.5s linear infinite;
+  height: 2px;
+}
+
+/* AI 思考動畫 - 終端機風格 */
+@keyframes ai-thinking {
+  0%, 100% { content: '█'; }
+  25% { content: '▓'; }
+  50% { content: '▒'; }
+  75% { content: '░'; }
+}
+
+.ai-thinking::after {
+  content: '█';
+  animation: ai-thinking 0.5s steps(4) infinite;
+  color: var(--accent-cyan);
+}
+
+/* 卡片進入動畫 - 滑入 + 閃爍 */
+@keyframes card-enter {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+    border-left-color: transparent;
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(0);
+    border-left-color: var(--accent-cyan);
+  }
+  100% {
+    border-left-color: var(--border-subtle);
+  }
+}
+
+.kanban-card.entering {
+  animation: card-enter 0.4s ease-out;
+}
+
+/* 數據更新閃爍 */
+@keyframes data-update {
+  0%, 100% { background: transparent; }
+  50% { background: rgba(34, 211, 238, 0.2); }
+}
+
+.data-updated {
+  animation: data-update 0.3s ease-out 2;
+}
+
+/* 通知脈動 (Inbox badge) - 增強版 */
+@keyframes notification-pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 8px rgba(34, 211, 238, 0);
+  }
+}
+
+.notification-badge {
+  animation: notification-pulse 2s ease-in-out infinite;
+}
+
+/* 成功確認動畫 */
+@keyframes success-flash {
+  0% {
+    background: rgba(74, 222, 128, 0.3);
+    box-shadow: var(--glow-green);
+  }
+  100% {
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+.success-flash {
+  animation: success-flash 0.5s ease-out;
+}
+```
+
+---
+
+## 🎛️ 擴展 CSS 變數
+
+```css
+:root {
+  /* 現有變數... */
+
+  /* 新增：間距系統 */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* 新增：圓角 */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 8px;
+
+  /* 新增：過渡 */
+  --transition-fast: 100ms ease-out;
+  --transition-normal: 200ms ease-out;
+  --transition-slow: 400ms ease-out;
+
+  /* 新增：z-index 層級 */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-modal: 200;
+  --z-toast: 300;
+  --z-quick-entry: 400;
+
+  /* 新增：陰影層級 */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-glow: var(--glow-cyan), 0 0 60px rgba(34, 211, 238, 0.15);
+}
+```
+
+---
+
+## 📁 更新目錄結構
+
+```
+dev-tracker/
+├── src/
+│   ├── components/
+│   │   ├── ...existing components...
+│   │   │
+│   │   ├── quick-entry/              # 新增：Quick Entry
+│   │   │   ├── QuickEntryWindow.tsx
+│   │   │   ├── QuickEntryInput.tsx
+│   │   │   ├── TypeSelector.tsx
+│   │   │   └── index.ts
+│   │   │
+│   │   ├── kanban/                   # 新增：Kanban 組件
+│   │   │   ├── KanbanBoard.tsx
+│   │   │   ├── KanbanColumn.tsx
+│   │   │   ├── KanbanCard.tsx
+│   │   │   ├── KanbanFilters.tsx
+│   │   │   ├── AddTaskModal.tsx
+│   │   │   └── index.ts
+│   │   │
+│   │   ├── notifications/            # 新增：通知組件
+│   │   │   ├── ToastContainer.tsx
+│   │   │   ├── Toast.tsx
+│   │   │   ├── NotificationBadge.tsx
+│   │   │   └── index.ts
+│   │   │
+│   │   └── chat/
+│   │       ├── ...existing components...
+│   │       └── CommandResponse.tsx   # 新增：Slash 指令回應
+│   │
+│   ├── pages/
+│   │   ├── ...existing pages...
+│   │   └── Kanban.tsx                # 新增：Kanban 頁面
+│   │
+│   └── styles/
+│       ├── globals.css               # 更新：新增變數和動畫
+│       ├── quick-entry.css           # 新增：Quick Entry 樣式
+│       ├── kanban.css                # 新增：Kanban 樣式
+│       └── notifications.css         # 新增：通知樣式
+│
+└── quick-entry.html                  # 新增：Quick Entry 獨立入口
+```
+
+---
+
 ## 🚀 下一步
 
 準備好就可以開始 scaffold：

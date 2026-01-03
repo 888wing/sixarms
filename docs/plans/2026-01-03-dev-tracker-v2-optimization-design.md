@@ -717,7 +717,431 @@ Phase 1: 基礎自動化          Phase 2: 智能體驗         Phase 3: 進階�
 
 ---
 
-## 10. 新增依賴清單
+## 10. UI 設計規範
+
+> 設計語言: 深夜工作室 Dark Brutalist Terminal
+> 完整規格請參考: `dev-tracker-v2.1-ui-spec.md`
+
+### 設計原則
+
+- **終端機美學**: 等寬字體、掃描線、霓虹光暈
+- **功能優先**: 清晰的資訊層級、快速的視覺識別
+- **動態回饋**: 微妙的動畫、即時的狀態更新
+
+### Quick Entry Window UI
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  ▸ quick-entry                                    ─  □  ✕  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │ > 今日完成咗登入頁面嘅 UI，加埋 validation...█      │   │
+│  │                                                     │   │
+│  │                                                     │   │
+│  └─────────────────────────────────────────────────────┘   │
+│                                                             │
+│  ┌───────────────────────────────────────────────────────┐ │
+│  │ 📁 專案: PeakShift-Overdrive                       ▼ │ │
+│  └───────────────────────────────────────────────────────┘ │
+│                                                             │
+│  ╭──────────╮ ╭──────────╮ ╭──────────╮ ╭──────────╮      │
+│  │ 💬 記錄  │ │ ✅ TODO  │ │ 💡 想法  │ │ 🐛 Bug   │      │
+│  ╰──────────╯ ╰──────────╯ ╰──────────╯ ╰──────────╯      │
+│                                                             │
+│  ────────────────────────────────────────────────────────  │
+│                               [ ESC 取消 ]  [ ⌘↵ 送出 ]    │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**CSS 樣式重點**:
+
+```css
+.quick-entry-window {
+  background: var(--bg-void);
+  border: 1px solid var(--accent-cyan);
+  border-radius: 8px;
+  box-shadow:
+    var(--glow-cyan),
+    0 0 60px rgba(34, 211, 238, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.quick-entry-input {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  caret-color: var(--accent-cyan);
+}
+
+.quick-entry-input:focus {
+  border-color: var(--accent-cyan);
+  box-shadow:
+    inset 0 0 20px rgba(34, 211, 238, 0.05),
+    0 0 0 1px rgba(34, 211, 238, 0.3);
+}
+
+/* 閃爍光標 */
+.quick-entry-input::after {
+  content: '█';
+  animation: blink 1s step-end infinite;
+  color: var(--accent-cyan);
+}
+```
+
+**類型按鈕**:
+
+```css
+.type-button {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  transition: all 0.15s ease-out;
+}
+
+.type-button:hover {
+  border-color: var(--accent-cyan);
+  color: var(--text-primary);
+  box-shadow: var(--glow-cyan);
+}
+
+.type-button.active {
+  background: rgba(34, 211, 238, 0.1);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+```
+
+### Kanban Board UI
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  ╔════════════════════════════════════════════════════════════════════╗ │
+│  ║ 📋 KANBAN                                      🔍 搜尋  ➕ 新增    ║ │
+│  ╚════════════════════════════════════════════════════════════════════╝ │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┏━━━━━━━━━━━━━━━━━━━━┓  ┏━━━━━━━━━━━━━━━━━━━━┓  ┏━━━━━━━━━━━━━━━━━━┓  │
+│  ┃ ○ BACKLOG      (5) ┃  ┃ ◉ 進行中       (2) ┃  ┃ ✓ 完成       (8) ┃  │
+│  ┣━━━━━━━━━━━━━━━━━━━━┫  ┣━━━━━━━━━━━━━━━━━━━━┫  ┣━━━━━━━━━━━━━━━━━━┫  │
+│  ┃                    ┃  ┃                    ┃  ┃                    ┃  │
+│  ┃ ┌────────────────┐ ┃  ┃ ┌────────────────┐ ┃  ┃ ┌────────────────┐ ┃  │
+│  ┃ │▌音效系統       │ ┃  ┃ │▌登入頁 UI     │ ┃  ┃ │ ✓ 卡牌動畫    │ ┃  │
+│  ┃ │ #PeakShift     │ ┃  ┃ │ #PeakShift     │ ┃  ┃ │   #PeakShift   │ ┃  │
+│  ┃ │ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │ ┃  ┃ │ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │ ┃  ┃ │ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │ ┃  │
+│  ┃ │ 🏷️ Feature     │ ┃  ┃ │ 🏷️ UI         │ ┃  ┃ │ 今日 12:34    │ ┃  │
+│  ┃ └────────────────┘ ┃  ┃ └────────────────┘ ┃  ┃ └────────────────┘ ┃  │
+│  ┃                    ┃  ┃                    ┃  ┃                    ┃  │
+│  ┃ ┌────────────────┐ ┃  ┃ ┌────────────────┐ ┃  ┃ ┌────────────────┐ ┃  │
+│  ┃ │▌成就系統       │ ┃  ┃ │▌計分 Bug 修復 │ ┃  ┃ │ ✓ 專案設定    │ ┃  │
+│  ┃ │ #PeakShift     │ ┃  ┃ │ #PeakShift     │ ┃  ┃ │   #Portfolio   │ ┃  │
+│  ┃ │ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │ ┃  ┃ │ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │ ┃  ┃ │ ┄┄┄┄┄┄┄┄┄┄┄┄┄┄ │ ┃  │
+│  ┃ │ 🏷️ Feature     │ ┃  ┃ │ 🏷️ BugFix     │ ┃  ┃ │ 昨日 18:20    │ ┃  │
+│  ┃ │ ⚠️ 停滯 3 天   │ ┃  ┃ └────────────────┘ ┃  ┃ └────────────────┘ ┃  │
+│  ┃ └────────────────┘ ┃  ┃                    ┃  ┃                    ┃  │
+│  ┗━━━━━━━━━━━━━━━━━━━━┛  ┗━━━━━━━━━━━━━━━━━━━━┛  ┗━━━━━━━━━━━━━━━━━━┛  │
+│                                                                         │
+│  ┌─ 篩選 ─────────────────────────────────────────────────────────────┐ │
+│  │ 專案: [ 全部 ▼ ]   標籤: [ 全部 ▼ ]   排序: [ 更新時間 ▼ ]        │ │
+│  └────────────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**CSS 樣式重點**:
+
+```css
+/* 欄位樣式 */
+.kanban-column {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+}
+
+.kanban-column-header {
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* 卡片樣式 */
+.kanban-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid transparent;
+  transition: all 0.15s ease-out;
+}
+
+.kanban-card:hover {
+  border-color: var(--accent-cyan);
+  border-left-color: var(--accent-cyan);
+  transform: translateX(4px);
+  box-shadow:
+    -4px 0 0 var(--accent-cyan),
+    var(--glow-cyan);
+}
+
+/* 欄位狀態顏色 */
+.kanban-column.backlog .kanban-card { border-left-color: var(--text-muted); }
+.kanban-column.in-progress .kanban-card { border-left-color: var(--accent-cyan); }
+.kanban-column.done .kanban-card { border-left-color: var(--accent-green); }
+
+/* 停滯警告 */
+.kanban-card.stale {
+  border-left-color: var(--accent-amber);
+}
+
+.kanban-card.stale::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent-amber);
+  animation: pulse-glow 2s infinite;
+}
+```
+
+### Toast Notifications UI
+
+```
+                                        ┌─────────────────────────────────────┐
+                                        │ [12:34:56] ✓ 掃描完成               │
+                                        │ 偵測到 3 個專案有更新               │
+                                        └─────────────────────────────────────┘
+                                        ┌─────────────────────────────────────┐
+                                        │ [12:35:01] ⚡ AI 分析完成            │
+                                        │ 生成咗 2 個問題喺 Inbox             │
+                                        │                       [ 查看 Inbox ] │
+                                        └─────────────────────────────────────┘
+                                        ┌─────────────────────────────────────┐
+                                        │ [12:35:10] ⚠️ TODO 停滯提醒         │
+                                        │ 「音效系統」已經停滯 3 日           │
+                                        │                       [ 查看任務 ]  │
+                                        └─────────────────────────────────────┘
+```
+
+**CSS 樣式重點**:
+
+```css
+.toast-container {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 400px;
+}
+
+.toast {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--accent-cyan);
+  border-radius: 4px;
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  animation: toast-slide-in 0.3s ease-out;
+}
+
+.toast-timestamp {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+/* 類型變體 */
+.toast.success { border-left-color: var(--accent-green); }
+.toast.warning { border-left-color: var(--accent-amber); }
+.toast.error { border-left-color: var(--accent-rose); }
+.toast.info { border-left-color: var(--accent-cyan); }
+
+/* 進入動畫 */
+@keyframes toast-slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+```
+
+### Slash Command Response UI
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│  User  /status                                                          │
+│                                                                         │
+│  ┌───────────────────────────────────────────────────────────────────┐ │
+│  │ ┌─ /status ──────────────────────────────────────────────────────┐ │ │
+│  │ │                                                                 │ │ │
+│  │ │  📊 今日進度摘要                                                │ │ │
+│  │ │  ═══════════════════════════════════════════════════════════   │ │ │
+│  │ │                                                                 │ │ │
+│  │ │  專案        狀態          更新                                 │ │ │
+│  │ │  ──────────────────────────────────────────────────────────    │ │ │
+│  │ │  PeakShift   ● active     12 commits today                     │ │ │
+│  │ │  Portfolio   ○ idle       3 days ago                           │ │ │
+│  │ │  DevTracker  ◐ slow       1 week ago                           │ │ │
+│  │ │                                                                 │ │ │
+│  │ │  ┌─ Summary ──────────────────────────────────────────────┐    │ │ │
+│  │ │  │  TODO: 3 pending │ In Progress: 2 │ Done today: 5      │    │ │ │
+│  │ │  └────────────────────────────────────────────────────────┘    │ │ │
+│  │ │                                                                 │ │ │
+│  │ └─────────────────────────────────────────────────────────────────┘ │ │
+│  └───────────────────────────────────────────────────────────────────┘ │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**CSS 樣式重點**:
+
+```css
+.command-response {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  padding: 16px;
+}
+
+.command-response-header {
+  color: var(--accent-cyan);
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.command-response-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.command-response-table th {
+  text-align: left;
+  color: var(--text-muted);
+  font-weight: normal;
+  padding: 4px 8px;
+  border-bottom: 1px dashed var(--border-subtle);
+}
+
+.command-response-table td {
+  padding: 8px;
+  color: var(--text-secondary);
+}
+
+/* 狀態指示器 */
+.status-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.status-indicator.active { background: var(--accent-green); box-shadow: var(--glow-green); }
+.status-indicator.slow { background: var(--accent-amber); box-shadow: var(--glow-amber); }
+.status-indicator.idle { background: var(--text-muted); }
+```
+
+### 動畫系統擴展
+
+```css
+/* globals.css 新增動畫 */
+
+@keyframes scan-line {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+@keyframes ai-thinking {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes data-update {
+  0% { background-color: transparent; }
+  50% { background-color: rgba(34, 211, 238, 0.1); }
+  100% { background-color: transparent; }
+}
+
+@keyframes notification-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(34, 211, 238, 0); }
+}
+
+@keyframes drag-glow {
+  0%, 100% { box-shadow: var(--glow-cyan); }
+  50% { box-shadow: 0 0 30px rgba(34, 211, 238, 0.5); }
+}
+```
+
+### CSS 變數擴展
+
+```css
+:root {
+  /* 現有變數... */
+
+  /* === 新增 UI 變數 === */
+
+  /* Spacing (4px grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.6);
+
+  /* Z-Index */
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal: 300;
+  --z-toast: 400;
+  --z-quick-entry: 500;
+
+  /* Transitions */
+  --transition-fast: 0.1s ease-out;
+  --transition-base: 0.15s ease-out;
+  --transition-slow: 0.3s ease-out;
+
+  /* Component-specific */
+  --card-radius: 4px;
+  --input-radius: 4px;
+  --button-radius: 4px;
+  --quick-entry-radius: 8px;
+}
+```
+
+---
+
+## 12. 新增依賴清單
 
 ### Rust (Cargo.toml)
 
@@ -745,7 +1169,7 @@ tauri-plugin-global-shortcut = "2"
 
 ---
 
-## 11. 後續考量
+## 13. 後續考量
 
 ### 產品化時需要補充
 
@@ -766,5 +1190,6 @@ tauri-plugin-global-shortcut = "2"
 
 ---
 
-> 文檔版本: 1.0
+> 文檔版本: 1.1
 > 最後更新: 2026-01-03
+> 變更記錄: 新增 Section 10 UI 設計規範
