@@ -49,7 +49,32 @@ pub fn run() {
 
             // Initialize scheduler
             let scheduler = Scheduler::new();
-            app.manage(scheduler);
+            app.manage(scheduler.clone());
+
+            // Run startup scan if enabled
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                // Small delay to ensure app is fully initialized
+                tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+
+                // Load settings to check if startup scan is enabled
+                let db = app_handle.state::<Database>();
+                let settings_json = db.get_setting("user_settings")
+                    .ok()
+                    .flatten()
+                    .unwrap_or_else(|| serde_json::to_string(&models::UserSettings::default()).unwrap());
+
+                if let Ok(settings) = serde_json::from_str::<models::UserSettings>(&settings_json) {
+                    if settings.scan.scan_on_startup {
+                        if let Err(e) = scheduler.run_startup_scan(&app_handle).await {
+                            log::error!("Startup scan failed: {}", e);
+                        }
+                    }
+
+                    // Start periodic scheduler
+                    scheduler.start(app_handle.clone(), settings.scan).await;
+                }
+            });
 
             // Setup logging in debug mode
             if cfg!(debug_assertions) {

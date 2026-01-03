@@ -1,7 +1,9 @@
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::time::{interval, Duration};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
+use crate::db::Database;
+use crate::scanner::GitScanner;
 use crate::models::ScanSettings;
 
 /// Scheduler state for managing periodic scans
@@ -85,6 +87,64 @@ impl Scheduler {
     /// Get last scan time
     pub async fn last_scan_time(&self) -> Option<chrono::DateTime<chrono::Utc>> {
         *self.last_scan.lock().await
+    }
+
+    /// Run a scan on app startup
+    pub async fn run_startup_scan(&self, app_handle: &AppHandle) -> Result<(), String> {
+        log::info!("Running startup scan...");
+
+        // Emit event to frontend
+        if let Err(e) = app_handle.emit("scheduler:startup-scan-started", ()) {
+            log::error!("Failed to emit startup-scan-started event: {}", e);
+        }
+
+        // Get database and scanner from app state
+        let db = app_handle.state::<Database>();
+        let scanner = app_handle.state::<GitScanner>();
+
+        // Get all active projects
+        let projects = db.get_projects().map_err(|e| format!("Failed to get projects: {}", e))?;
+        let active_projects: Vec<_> = projects.iter()
+            .filter(|p| p.status == crate::models::ProjectStatus::Active)
+            .collect();
+
+        log::info!("Found {} active projects to scan", active_projects.len());
+
+        let mut scan_results = Vec::new();
+
+        for project in active_projects {
+            let path = std::path::Path::new(&project.path);
+
+            if !scanner.is_git_repo(path) {
+                log::warn!("Project {} is not a git repo, skipping", project.name);
+                continue;
+            }
+
+            match scanner.get_today_diff(path) {
+                Ok(mut diff) => {
+                    diff.project_id = project.id.clone();
+                    if diff.total_additions > 0 || diff.total_deletions > 0 {
+                        scan_results.push((project.clone(), diff));
+                    }
+                }
+                Err(e) => {
+                    log::error!("Failed to scan project {}: {}", project.name, e);
+                }
+            }
+        }
+
+        log::info!("Startup scan complete: {} projects with changes", scan_results.len());
+
+        // Emit scan results to frontend
+        if let Err(e) = app_handle.emit("scheduler:startup-scan-complete", scan_results.len()) {
+            log::error!("Failed to emit startup-scan-complete event: {}", e);
+        }
+
+        // Update last scan time
+        let mut last = self.last_scan.lock().await;
+        *last = Some(chrono::Utc::now());
+
+        Ok(())
     }
 }
 
