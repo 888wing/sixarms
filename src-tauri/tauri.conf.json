@@ -46,7 +46,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXkgMDA3N0NBMkNGQkJDRTBFQwpSV1RzNEx6N0xNcDNBTzAxNHlBR2N6ZHEyQkNYZkRwVVArSC9NSGVQOEt4OVBud09jUFhPVjlBSAo=",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXkgNjYzMUY2MkE0NDFBNUMwRApSV1FOWEJwRUt2WXhadXlFNk5sVm9oUTBYcjExSG9UeTFyVi9FZW15RmFnNks3dkRyNk8zNDhUNAo=",
       "endpoints": [
         "https://github.com/888wing/sixarms/releases/latest/download/latest.json"
       ]
