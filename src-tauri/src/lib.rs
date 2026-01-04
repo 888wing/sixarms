@@ -19,6 +19,7 @@ use notification::NotificationService;
 use scheduler::Scheduler;
 use scanner::GitScanner;
 use tauri::Manager;
+use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -96,6 +97,28 @@ pub fn run() {
                         .level(log::LevelFilter::Info)
                         .build(),
                 )?;
+            }
+
+            // Register global shortcut ⌘+Shift+D (Cmd+Shift+D on macOS)
+            #[cfg(desktop)]
+            {
+                let shortcut = Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyD);
+                let app_handle = app.handle().clone();
+
+                app.handle().plugin(
+                    tauri_plugin_global_shortcut::Builder::new()
+                        .with_handler(move |_app, _shortcut, event| {
+                            if event.state() == tauri_plugin_global_shortcut::ShortcutState::Pressed {
+                                if let Some(window) = app_handle.get_webview_window("main") {
+                                    let _ = window.show();
+                                    let _ = window.set_focus();
+                                }
+                            }
+                        })
+                        .build(),
+                )?;
+
+                app.global_shortcut().register(shortcut)?;
             }
 
             // Initialize updater plugin (desktop only)
