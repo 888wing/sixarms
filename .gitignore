@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+target/
+
+# Build outputs
+dist/
+dist-ssr/
+*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# Tauri
+src-tauri/target/
+src-tauri/WixTools/
+src-tauri/Cargo.lock
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+coverage/
+
+# Local tool configurations
+.claude/
+.serena/
