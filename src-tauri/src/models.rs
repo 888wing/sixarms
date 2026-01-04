@@ -275,6 +275,64 @@ pub struct GitDiffResult {
     pub total_deletions: i32,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct GitTag {
+    pub name: String,
+    pub commit_hash: String,
+    pub date: String,
+    pub message: Option<String>,
+}
+
+// ============================================
+// Milestone Models
+// ============================================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Milestone {
+    pub id: String,
+    pub project_id: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub version: Option<String>,
+    pub git_tag: Option<String>,
+    pub status: MilestoneStatus,
+    pub target_date: Option<String>,
+    pub completed_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum MilestoneStatus {
+    Planned,
+    InProgress,
+    Completed,
+    Cancelled,
+}
+
+impl Default for MilestoneStatus {
+    fn default() -> Self {
+        MilestoneStatus::Planned
+    }
+}
+
+impl Milestone {
+    pub fn new(project_id: String, title: String) -> Self {
+        Milestone {
+            id: Uuid::new_v4().to_string(),
+            project_id,
+            title,
+            description: None,
+            version: None,
+            git_tag: None,
+            status: MilestoneStatus::Planned,
+            target_date: None,
+            completed_at: None,
+            created_at: Utc::now(),
+        }
+    }
+}
+
 // ============================================
 // API Response Models
 // ============================================

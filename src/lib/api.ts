@@ -13,6 +13,7 @@ import type {
   SchedulerStatus,
   FileChange,
   GitDiffResult,
+  GitTag,
 } from './types';
 
 // ============================================
@@ -212,6 +213,9 @@ export const scannerApi = {
 
   formatChanges: (files: FileChange[]) =>
     invoke<string>('format_changes', { files }),
+
+  getGitTags: (repoPath: string) =>
+    invoke<GitTag[]>('get_git_tags', { repo_path: repoPath }),
 };
 
 // ============================================

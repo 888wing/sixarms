@@ -7,6 +7,7 @@ import { Home } from "./pages/Home";
 import { Dashboard } from "./pages/Dashboard";
 import { Chat } from "./pages/Chat";
 import { Inbox } from "./pages/Inbox";
+import { Todos } from "./pages/Todos";
 import { Settings } from "./pages/Settings";
 
 function AppContent() {
@@ -23,6 +24,7 @@ function AppContent() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/inbox" element={<Inbox />} />
+            <Route path="/todos" element={<Todos />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>

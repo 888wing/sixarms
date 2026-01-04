@@ -1,7 +1,7 @@
 use std::path::Path;
 use std::process::Command;
 use regex::Regex;
-use crate::models::{FileChange, GitDiffResult};
+use crate::models::{FileChange, GitDiffResult, GitTag};
 
 pub struct GitScanner;
 
@@ -272,6 +272,52 @@ impl GitScanner {
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         Ok(self.parse_numstat(&stdout))
+    }
+
+    /// Get all git tags for a repository
+    pub fn get_git_tags(&self, repo_path: &Path) -> Result<Vec<GitTag>, String> {
+        let safe_path = self.validate_path(repo_path)?;
+
+        if !self.is_git_repo(&safe_path) {
+            return Err("Not a git repository".to_string());
+        }
+
+        // Get tags with commit info: tag_name, commit_hash, date, message
+        let output = Command::new("git")
+            .args([
+                "tag",
+                "-l",
+                "--format=%(refname:short)|||%(objectname:short)|||%(creatordate:iso-strict)|||%(contents:subject)",
+                "--sort=-creatordate",
+            ])
+            .current_dir(&safe_path)
+            .output()
+            .map_err(|e| format!("Failed to run git: {}", e))?;
+
+        if !output.status.success() {
+            return Err("Git command failed".to_string());
+        }
+
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let tags: Vec<GitTag> = stdout
+            .lines()
+            .filter(|line| !line.trim().is_empty())
+            .filter_map(|line| {
+                let parts: Vec<&str> = line.split("|||").collect();
+                if parts.len() >= 3 {
+                    Some(GitTag {
+                        name: parts[0].trim().to_string(),
+                        commit_hash: parts[1].trim().to_string(),
+                        date: parts[2].trim().to_string(),
+                        message: parts.get(3).map(|s| s.trim().to_string()).filter(|s| !s.is_empty()),
+                    })
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        Ok(tags)
     }
 
     /// Parse git numstat output into FileChange structs

@@ -149,6 +149,7 @@ pub fn run() {
             scanner_commands::get_current_branch,
             scanner_commands::is_git_repo,
             scanner_commands::format_changes,
+            scanner_commands::get_git_tags,
             // Scheduler commands
             scheduler_commands::start_scheduler,
             scheduler_commands::stop_scheduler,

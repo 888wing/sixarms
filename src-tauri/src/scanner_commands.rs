@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use tauri::State;
 use crate::scanner::GitScanner;
-use crate::models::{FileChange, GitDiffResult};
+use crate::models::{FileChange, GitDiffResult, GitTag};
 
 #[tauri::command]
 pub fn scan_today(scanner: State<GitScanner>, repo_path: String) -> Result<GitDiffResult, String> {
@@ -52,4 +52,10 @@ pub fn is_git_repo(scanner: State<GitScanner>, repo_path: String) -> Result<bool
 #[tauri::command]
 pub fn format_changes(scanner: State<GitScanner>, files: Vec<FileChange>) -> Result<String, String> {
     Ok(scanner.format_changes_for_display(&files))
+}
+
+#[tauri::command]
+pub fn get_git_tags(scanner: State<GitScanner>, repo_path: String) -> Result<Vec<GitTag>, String> {
+    let path = PathBuf::from(repo_path);
+    scanner.get_git_tags(&path)
 }

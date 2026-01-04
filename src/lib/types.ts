@@ -139,6 +139,32 @@ export interface GitDiffResult {
   total_deletions: number;
 }
 
+export interface GitTag {
+  name: string;
+  commit_hash: string;
+  date: string;
+  message?: string;
+}
+
+// ============================================
+// Milestone Types
+// ============================================
+
+export interface Milestone {
+  id: string;
+  project_id: string;
+  title: string;
+  description?: string;
+  version?: string;
+  git_tag?: string;
+  status: MilestoneStatus;
+  target_date?: string;
+  completed_at?: string;
+  created_at: string;
+}
+
+export type MilestoneStatus = 'planned' | 'in_progress' | 'completed' | 'cancelled';
+
 // ============================================
 // API Response Types
 // ============================================
