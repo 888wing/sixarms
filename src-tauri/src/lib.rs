@@ -113,6 +113,7 @@ pub fn run() {
             // Database commands
             commands::get_projects,
             commands::create_project,
+            commands::create_projects_batch,
             commands::update_project_status,
             commands::delete_project,
             commands::get_daily_logs,

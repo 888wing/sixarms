@@ -19,6 +19,17 @@ pub fn create_project(db: State<Database>, name: String, path: String) -> Result
 }
 
 #[tauri::command]
+pub fn create_projects_batch(db: State<Database>, projects: Vec<(String, String)>) -> Result<Vec<Project>, String> {
+    let mut created = Vec::new();
+    for (name, path) in projects {
+        let project = Project::new(name, path);
+        db.create_project(&project).map_err(|e| e.to_string())?;
+        created.push(project);
+    }
+    Ok(created)
+}
+
+#[tauri::command]
 pub fn update_project_status(db: State<Database>, id: String, status: String) -> Result<(), String> {
     let status = match status.as_str() {
         "active" => ProjectStatus::Active,

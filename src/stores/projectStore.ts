@@ -11,6 +11,7 @@ interface ProjectState {
   // Actions
   fetchProjects: () => Promise<void>;
   createProject: (name: string, path: string) => Promise<Project | null>;
+  createProjectsBatch: (projects: [string, string][]) => Promise<Project[]>;
   updateProjectStatus: (id: string, status: ProjectStatus) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   selectProject: (id: string | null) => void;
@@ -44,6 +45,21 @@ export const useProjectStore = create<ProjectState>((set) => ({
     } catch (error) {
       set({ error: String(error), loading: false });
       return null;
+    }
+  },
+
+  createProjectsBatch: async (projects: [string, string][]) => {
+    set({ loading: true, error: null });
+    try {
+      const createdProjects = await projectApi.createBatch(projects);
+      set((state) => ({
+        projects: [...state.projects, ...createdProjects],
+        loading: false,
+      }));
+      return createdProjects;
+    } catch (error) {
+      set({ error: String(error), loading: false });
+      return [];
     }
   },
 

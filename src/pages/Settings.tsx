@@ -23,6 +23,7 @@ export function Settings() {
     loading: projectsLoading,
     fetchProjects,
     createProject,
+    createProjectsBatch,
     updateProjectStatus,
     deleteProject,
   } = useProjectStore();
@@ -85,19 +86,39 @@ export function Settings() {
     try {
       const selected = await open({
         directory: true,
-        multiple: false,
-        title: "Select Project Folder",
+        multiple: true,
+        title: "Select Project Folders (hold Cmd/Ctrl for multi-select)",
       });
       if (selected) {
-        setNewProjectPath(selected as string);
-        // Auto-fill project name from folder name if empty
-        if (!newProjectName.trim()) {
-          const folderName = (selected as string).split("/").pop() || "";
-          setNewProjectName(folderName);
+        // Handle both single and multiple selection
+        const paths = Array.isArray(selected) ? selected : [selected];
+        if (paths.length === 1) {
+          // Single selection - fill form
+          setNewProjectPath(paths[0]);
+          if (!newProjectName.trim()) {
+            const folderName = paths[0].split("/").pop() || "";
+            setNewProjectName(folderName);
+          }
+        } else if (paths.length > 1) {
+          // Multiple selection - batch create directly
+          const projectsToCreate: [string, string][] = paths.map((path) => {
+            const name = path.split("/").pop() || path;
+            return [name, path];
+          });
+          const created = await createProjectsBatch(projectsToCreate);
+          if (created.length > 0) {
+            toast.success(`Added ${created.length} projects`);
+            setShowAddProject(false);
+            setNewProjectName("");
+            setNewProjectPath("");
+          } else {
+            toast.error("Failed to add projects");
+          }
         }
       }
     } catch (err) {
       console.error("Failed to open folder dialog:", err);
+      toast.error("Failed to select folders");
     }
   };
 
@@ -307,7 +328,7 @@ export function Settings() {
 
               <p className="text-text-muted text-xs flex items-center gap-1">
                 <span>💡</span>
-                <span>You can drag & drop a folder above, or click "Browse" to select</span>
+                <span>Hold Cmd (Mac) / Ctrl (Win) to select multiple folders at once</span>
               </p>
 
               <div className="flex justify-end gap-2 pt-2">

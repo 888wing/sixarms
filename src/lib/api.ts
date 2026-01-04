@@ -25,6 +25,9 @@ export const projectApi = {
   create: (name: string, path: string) =>
     invoke<Project>('create_project', { name, path }),
 
+  createBatch: (projects: [string, string][]) =>
+    invoke<Project[]>('create_projects_batch', { projects }),
+
   updateStatus: (id: string, status: ProjectStatus) =>
     invoke<void>('update_project_status', { id, status }),
 
