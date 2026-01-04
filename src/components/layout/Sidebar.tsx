@@ -7,6 +7,7 @@ import {
   MessageSquare,
   Inbox,
   CheckSquare,
+  GitBranch,
   Settings,
   ChevronRight,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const navItems: NavItem[] = [
   { icon: Home, label: "HOME", path: "/" },
   { icon: BarChart3, label: "DASH", path: "/dashboard" },
   { icon: CheckSquare, label: "TODO", path: "/todos" },
+  { icon: GitBranch, label: "VER", path: "/versions" },
   { icon: MessageSquare, label: "CHAT", path: "/chat" },
   { icon: Inbox, label: "INBOX", path: "/inbox", badge: 3 },
   { icon: Settings, label: "SET", path: "/settings" },
