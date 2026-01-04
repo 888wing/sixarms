@@ -17,7 +17,7 @@ interface VersionState {
   linkTagToMilestone: (milestoneId: string, tagName: string) => void;
 }
 
-export const useVersionStore = create<VersionState>((set, get) => ({
+export const useVersionStore = create<VersionState>((set) => ({
   gitTags: [],
   milestones: [],
   loading: false,

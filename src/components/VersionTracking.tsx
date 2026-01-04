@@ -19,16 +19,16 @@ const statusLabels: Record<MilestoneStatus, string> = {
 };
 
 export function VersionTracking() {
-  const { gitTags, milestones, loading, fetchGitTags, addMilestone, updateMilestoneStatus, deleteMilestone, linkTagToMilestone } = useVersionStore();
-  const { projects, selectedProject } = useProjectStore();
+  const { gitTags, milestones, loading, fetchGitTags, addMilestone, updateMilestoneStatus, deleteMilestone } = useVersionStore();
+  const { projects, selectedProjectId } = useProjectStore();
   const [showNewMilestone, setShowNewMilestone] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newVersion, setNewVersion] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [activeTab, setActiveTab] = useState<'tags' | 'milestones'>('tags');
 
-  const currentProject = selectedProject
-    ? projects.find((p) => p.id === selectedProject)
+  const currentProject = selectedProjectId
+    ? projects.find((p) => p.id === selectedProjectId)
     : projects[0];
 
   useEffect(() => {
