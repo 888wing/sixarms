@@ -66,7 +66,7 @@ impl GrokClient {
         };
 
         let request = GrokRequest {
-            model: "grok-3".to_string(),
+            model: "grok-4-1-fast-reasoning".to_string(),
             messages,
             temperature: 0.7,
             max_tokens: 2048,
