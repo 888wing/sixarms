@@ -40,6 +40,17 @@ const defaultSettings: UserSettings = {
     auto_classify: true,
     auto_summarize: true,
   },
+  version: {
+    auto_refresh: true,
+    refresh_minutes: 30,
+    auto_milestones_from_tags: true,
+    auto_major_updates: false,
+    major_update_threshold: {
+      commits: 50,
+      files_changed: 20,
+    },
+    ai_create_mode: 'suggest',
+  },
   theme: 'dark',
   language: 'en',
 };

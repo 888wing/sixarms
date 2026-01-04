@@ -3,6 +3,9 @@ import type {
   Project,
   ProjectStatus,
   DailyLog,
+  Milestone,
+  MilestoneStatus,
+  MilestoneSource,
   Todo,
   TodoStatus,
   InboxItem,
@@ -14,6 +17,10 @@ import type {
   FileChange,
   GitDiffResult,
   GitTag,
+  CachedGitTag,
+  TagSyncResult,
+  AiResponseWithActions,
+  DetectedAction,
 } from './types';
 
 // ============================================
@@ -51,6 +58,42 @@ export const dailyLogApi = {
       summary,
       category,
     }),
+};
+
+// ============================================
+// Milestone API
+// ============================================
+
+export const milestoneApi = {
+  getAll: (projectId?: string) =>
+    invoke<Milestone[]>('get_milestones', { project_id: projectId }),
+
+  create: (
+    projectId: string,
+    title: string,
+    description?: string,
+    version?: string,
+    gitTag?: string,
+    status?: MilestoneStatus,
+    source?: MilestoneSource,
+    targetDate?: string
+  ) =>
+    invoke<Milestone>('create_milestone', {
+      project_id: projectId,
+      title,
+      description,
+      version,
+      git_tag: gitTag,
+      status,
+      source,
+      target_date: targetDate,
+    }),
+
+  updateStatus: (id: string, status: MilestoneStatus) =>
+    invoke<void>('update_milestone_status', { id, status }),
+
+  delete: (id: string) =>
+    invoke<void>('delete_milestone', { id }),
 };
 
 // ============================================
@@ -179,6 +222,25 @@ export const grokApi = {
 
   sendMessages: (messages: GrokMessage[]) =>
     invoke<string>('send_grok_messages', { messages }),
+
+  chatWithIntent: (
+    message: string,
+    history: ChatHistoryItem[],
+    projectContext?: string,
+    projectId?: string
+  ) =>
+    invoke<AiResponseWithActions>('chat_with_intent', {
+      message,
+      history,
+      project_context: projectContext,
+      project_id: projectId,
+    }),
+
+  executeAction: (action: DetectedAction, projectId?: string) =>
+    invoke<{ type: string; data: unknown }>('execute_detected_action', {
+      action,
+      project_id: projectId,
+    }),
 };
 
 // ============================================
@@ -216,6 +278,16 @@ export const scannerApi = {
 
   getGitTags: (repoPath: string) =>
     invoke<GitTag[]>('get_git_tags', { repo_path: repoPath }),
+
+  syncGitTags: (projectId: string, repoPath: string, autoCreateMilestones: boolean) =>
+    invoke<TagSyncResult>('sync_git_tags', {
+      project_id: projectId,
+      repo_path: repoPath,
+      auto_create_milestones: autoCreateMilestones,
+    }),
+
+  getCachedTags: (projectId?: string) =>
+    invoke<CachedGitTag[]>('get_cached_tags', { project_id: projectId }),
 };
 
 // ============================================

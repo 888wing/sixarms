@@ -1,16 +1,76 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Search, Check, Clock, MessageSquare, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Search, Check, Clock, MessageSquare, Loader2, ListTodo, X } from "lucide-react";
 import { useInboxStore } from "../stores/inboxStore";
 import { useProjectStore } from "../stores/projectStore";
-import type { InboxItem } from "../lib/types";
+import type { InboxItem, DetectedAction } from "../lib/types";
+
+// Action suggestion component for detected_actions
+function InboxActionSuggestion({
+  action,
+  onExecute,
+  onDismiss,
+  executing,
+}: {
+  action: DetectedAction;
+  onExecute: () => void;
+  onDismiss: () => void;
+  executing: boolean;
+}) {
+  if (action.data.type !== 'todo') return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className="flex items-center justify-between p-3 rounded border bg-accent-cyan/10 border-accent-cyan/30"
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-accent-cyan"><ListTodo size={16} /></span>
+        <div>
+          <span className="text-xs font-mono text-accent-cyan">創建待辦</span>
+          <p className="text-sm text-text-primary truncate max-w-[300px]">
+            {action.data.title}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onDismiss}
+          disabled={executing}
+          className="p-1.5 text-text-muted hover:text-text-primary transition-colors"
+        >
+          <X size={14} />
+        </button>
+        <button
+          onClick={onExecute}
+          disabled={executing}
+          className="px-3 py-1.5 text-sm rounded text-accent-cyan bg-accent-cyan/10 border border-accent-cyan/30 hover:opacity-80 transition-opacity flex items-center gap-2"
+        >
+          {executing ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <>確認</>
+          )}
+        </button>
+      </div>
+    </motion.div>
+  );
+}
 
 function InboxItemCard({
   item,
   onAnswer,
+  onExecuteAction,
+  onDismissAction,
+  executingAction,
 }: {
   item: InboxItem;
   onAnswer: (id: string, answer: string) => void;
+  onExecuteAction: (itemId: string, action: DetectedAction, projectId?: string) => void;
+  onDismissAction: (itemId: string, actionIndex: number) => void;
+  executingAction: boolean;
 }) {
   const [inputValue, setInputValue] = useState("");
   const [selectedAction, setSelectedAction] = useState<string | null>(null);
@@ -179,6 +239,26 @@ function InboxItemCard({
             </div>
           )}
 
+          {/* AI Detected Actions - executable todo suggestions */}
+          {item.detected_actions && item.detected_actions.length > 0 && (
+            <div className="mb-4 space-y-2">
+              <span className="text-xs font-mono text-text-muted">
+                AI 建議操作：
+              </span>
+              <AnimatePresence>
+                {item.detected_actions.map((action, index) => (
+                  <InboxActionSuggestion
+                    key={index}
+                    action={action}
+                    onExecute={() => onExecuteAction(item.id, action, item.project_id)}
+                    onDismiss={() => onDismissAction(item.id, index)}
+                    executing={executingAction}
+                  />
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+
           {/* Action buttons */}
           <div className="flex items-center justify-end gap-2">
             <button
@@ -208,12 +288,15 @@ export function Inbox() {
   const {
     loading,
     filter,
+    executingAction,
     pendingCount,
     answeredCount,
     filteredItems,
     fetchItems,
     answerItem,
     setFilter,
+    executeAction,
+    dismissAction,
   } = useInboxStore();
 
   const { fetchProjects } = useProjectStore();
@@ -370,6 +453,9 @@ export function Inbox() {
                       key={item.id}
                       item={item}
                       onAnswer={handleAnswer}
+                      onExecuteAction={executeAction}
+                      onDismissAction={dismissAction}
+                      executingAction={executingAction}
                     />
                   ))}
                 </div>

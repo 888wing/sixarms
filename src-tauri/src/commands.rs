@@ -91,6 +91,80 @@ pub fn create_daily_log(
 }
 
 // ============================================
+// Milestone Commands
+// ============================================
+
+#[tauri::command]
+pub fn get_milestones(db: State<Database>, project_id: Option<String>) -> Result<Vec<Milestone>, String> {
+    db.get_milestones(project_id.as_deref()).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn create_milestone(
+    db: State<Database>,
+    project_id: String,
+    title: String,
+    description: Option<String>,
+    version: Option<String>,
+    git_tag: Option<String>,
+    status: Option<String>,
+    source: Option<String>,
+    target_date: Option<String>,
+) -> Result<Milestone, String> {
+    let status = match status.as_deref().unwrap_or("planned") {
+        "planned" => MilestoneStatus::Planned,
+        "in_progress" => MilestoneStatus::InProgress,
+        "completed" => MilestoneStatus::Completed,
+        "cancelled" => MilestoneStatus::Cancelled,
+        _ => return Err("Invalid status".to_string()),
+    };
+
+    let source = match source.as_deref().unwrap_or("manual") {
+        "tag" => MilestoneSource::Tag,
+        "ai" => MilestoneSource::Ai,
+        _ => MilestoneSource::Manual,
+    };
+
+    let milestone = Milestone {
+        id: uuid::Uuid::new_v4().to_string(),
+        project_id,
+        title,
+        description,
+        version,
+        git_tag,
+        status: status.clone(),
+        source,
+        target_date,
+        completed_at: if status == MilestoneStatus::Completed {
+            Some(chrono::Utc::now())
+        } else {
+            None
+        },
+        created_at: chrono::Utc::now(),
+    };
+
+    db.create_milestone(&milestone).map_err(|e| e.to_string())?;
+    Ok(milestone)
+}
+
+#[tauri::command]
+pub fn update_milestone_status(db: State<Database>, id: String, status: String) -> Result<(), String> {
+    let status = match status.as_str() {
+        "planned" => MilestoneStatus::Planned,
+        "in_progress" => MilestoneStatus::InProgress,
+        "completed" => MilestoneStatus::Completed,
+        "cancelled" => MilestoneStatus::Cancelled,
+        _ => return Err("Invalid status".to_string()),
+    };
+    db.update_milestone_status(&id, status).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub fn delete_milestone(db: State<Database>, id: String) -> Result<(), String> {
+    db.delete_milestone(&id).map_err(|e| e.to_string())
+}
+
+// ============================================
 // Todo Commands
 // ============================================
 

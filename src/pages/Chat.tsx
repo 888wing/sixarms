@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, ChevronDown, Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { Send, ChevronDown, Loader2, AlertCircle, RefreshCw, ListTodo, FileText, CheckCircle, X } from "lucide-react";
 import { useChatStore } from "../stores/chatStore";
 import { useProjectStore } from "../stores/projectStore";
 import { useSettingsStore } from "../stores/settingsStore";
-import type { ChatMessage, ChatAction } from "../lib/types";
+import type { ChatMessage, ChatAction, DetectedAction } from "../lib/types";
 
 function ActionCard({ action }: { action?: ChatAction }) {
   if (!action) return null;
@@ -66,6 +66,91 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   );
 }
 
+function ActionSuggestion({
+  action,
+  onExecute,
+  onDismiss,
+  executing,
+}: {
+  action: DetectedAction;
+  onExecute: () => void;
+  onDismiss: () => void;
+  executing: boolean;
+}) {
+  const getActionInfo = () => {
+    switch (action.data.type) {
+      case 'todo':
+        return {
+          icon: <ListTodo size={16} />,
+          label: '創建待辦',
+          title: action.data.title,
+          color: 'text-accent-cyan',
+          bgColor: 'bg-accent-cyan/10 border-accent-cyan/30',
+        };
+      case 'progress':
+        return {
+          icon: <FileText size={16} />,
+          label: '記錄進度',
+          title: action.data.summary,
+          color: 'text-accent-green',
+          bgColor: 'bg-accent-green/10 border-accent-green/30',
+        };
+      case 'inbox':
+        return {
+          icon: <CheckCircle size={16} />,
+          label: '添加跟進',
+          title: action.data.question,
+          color: 'text-accent-amber',
+          bgColor: 'bg-accent-amber/10 border-accent-amber/30',
+        };
+      default:
+        return null;
+    }
+  };
+
+  const info = getActionInfo();
+  if (!info) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      className={`flex items-center justify-between p-3 rounded border ${info.bgColor}`}
+    >
+      <div className="flex items-center gap-3">
+        <span className={info.color}>{info.icon}</span>
+        <div>
+          <span className={`text-xs font-mono ${info.color}`}>{info.label}</span>
+          <p className="text-sm text-text-primary truncate max-w-[300px]">
+            {info.title}
+          </p>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onDismiss}
+          disabled={executing}
+          className="p-1.5 text-text-muted hover:text-text-primary transition-colors"
+        >
+          <X size={14} />
+        </button>
+        <button
+          onClick={onExecute}
+          disabled={executing}
+          className={`px-3 py-1.5 text-sm rounded ${info.color} ${info.bgColor} hover:opacity-80 transition-opacity flex items-center gap-2`}
+        >
+          {executing ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <>確認</>
+          )}
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 export function Chat() {
   const [input, setInput] = useState("");
   const [showProjectMenu, setShowProjectMenu] = useState(false);
@@ -74,11 +159,15 @@ export function Chat() {
 
   const {
     messages,
+    pendingActions,
     loading,
     sending,
+    executingAction,
     error,
     fetchMessages,
     sendMessage,
+    executeAction,
+    dismissAction,
   } = useChatStore();
 
   const {
@@ -262,6 +351,28 @@ export function Chat() {
 
         <div ref={messagesEndRef} />
       </div>
+
+      {/* Pending Actions */}
+      {pendingActions.length > 0 && (
+        <div className="px-4 py-3 border-t border-border-subtle bg-bg-elevated/50">
+          <div className="max-w-4xl mx-auto space-y-2">
+            <div className="text-xs text-text-muted font-mono mb-2">
+              💡 AI 偵測到以下動作建議：
+            </div>
+            <AnimatePresence>
+              {pendingActions.map((action, index) => (
+                <ActionSuggestion
+                  key={`action-${index}`}
+                  action={action}
+                  onExecute={() => executeAction(action, selectedProjectId ?? undefined)}
+                  onDismiss={() => dismissAction(index)}
+                  executing={executingAction}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
+      )}
 
       {/* Input */}
       <div className="p-4 border-t border-border-subtle">

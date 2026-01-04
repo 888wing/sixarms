@@ -29,6 +29,7 @@ export const createMockInboxItem = (overrides: Partial<InboxItem> = {}): InboxIt
     { id: 'continue', label: 'Continue', icon: '🚀' },
     { id: 'delay', label: 'Delay', icon: '📅' },
   ],
+  detected_actions: [],
   status: 'pending',
   created_at: '2025-01-01T00:00:00Z',
   ...overrides,

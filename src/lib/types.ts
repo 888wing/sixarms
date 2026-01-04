@@ -59,6 +59,7 @@ export interface InboxItem {
   question: string;
   context?: string;
   suggested_actions: SuggestedAction[];
+  detected_actions: DetectedAction[];
   status: InboxStatus;
   answer?: string;
   created_at: string;
@@ -104,6 +105,7 @@ export type ChatActionType = 'logged' | 'todo_created' | 'project_updated';
 export interface UserSettings {
   notifications: NotificationSettings;
   scan: ScanSettings;
+  version: VersionSettings;
   theme: string;
   language: string;
 }
@@ -121,6 +123,22 @@ export interface ScanSettings {
   auto_classify: boolean;
   auto_summarize: boolean;
 }
+
+export interface VersionSettings {
+  auto_refresh: boolean;
+  refresh_minutes: number;
+  auto_milestones_from_tags: boolean;
+  auto_major_updates: boolean;
+  major_update_threshold: MajorUpdateThreshold;
+  ai_create_mode: AiCreateMode;
+}
+
+export interface MajorUpdateThreshold {
+  commits: number;
+  files_changed: number;
+}
+
+export type AiCreateMode = 'suggest' | 'auto' | 'disabled';
 
 export interface SchedulerStatus {
   is_running: boolean;
@@ -158,12 +176,65 @@ export interface Milestone {
   version?: string;
   git_tag?: string;
   status: MilestoneStatus;
+  source: MilestoneSource;
   target_date?: string;
   completed_at?: string;
   created_at: string;
 }
 
 export type MilestoneStatus = 'planned' | 'in_progress' | 'completed' | 'cancelled';
+export type MilestoneSource = 'manual' | 'tag' | 'ai';
+
+// ============================================
+// Cached Git Tag Types
+// ============================================
+
+export interface CachedGitTag {
+  id: string;
+  project_id: string;
+  name: string;
+  commit_hash: string;
+  date: string;
+  message?: string;
+  first_seen_at: string;
+}
+
+export interface TagSyncResult {
+  project_id: string;
+  total_tags: number;
+  new_tags: CachedGitTag[];
+}
+
+// ============================================
+// AI Action Types
+// ============================================
+
+export type ConversationIntent =
+  | 'create_todo'
+  | 'log_progress'
+  | 'create_inbox_item'
+  | 'create_milestone'
+  | 'ask_question'
+  | 'general_chat';
+
+export interface DetectedAction {
+  intent: ConversationIntent;
+  confidence: number;
+  data: ActionData;
+  confirmed: boolean;
+}
+
+export type ActionData =
+  | { type: 'todo'; title: string; priority?: string; due_date?: string }
+  | { type: 'progress'; summary: string; category: string; date?: string }
+  | { type: 'inbox'; question: string; item_type: string }
+  | { type: 'milestone'; title: string; description?: string; version?: string; git_tag?: string }
+  | { type: 'none' };
+
+export interface AiResponseWithActions {
+  message: string;
+  detected_actions: DetectedAction[];
+}
 
 // ============================================
 // API Response Types

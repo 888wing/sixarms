@@ -1,12 +1,13 @@
 import { create } from 'zustand';
-import { inboxApi } from '../lib/api';
-import type { InboxItem, InboxStatus } from '../lib/types';
+import { inboxApi, grokApi } from '../lib/api';
+import type { InboxItem, InboxStatus, DetectedAction } from '../lib/types';
 
 interface InboxState {
   items: InboxItem[];
   loading: boolean;
   error: string | null;
   filter: 'all' | 'pending' | 'answered';
+  executingAction: boolean;
 
   // Computed
   pendingCount: () => number;
@@ -23,6 +24,8 @@ interface InboxState {
     context?: string
   ) => Promise<InboxItem | null>;
   setFilter: (filter: 'all' | 'pending' | 'answered') => void;
+  executeAction: (itemId: string, action: DetectedAction, projectId?: string) => Promise<void>;
+  dismissAction: (itemId: string, actionIndex: number) => void;
 }
 
 export const useInboxStore = create<InboxState>((set, get) => ({
@@ -30,6 +33,7 @@ export const useInboxStore = create<InboxState>((set, get) => ({
   loading: false,
   error: null,
   filter: 'all',
+  executingAction: false,
 
   pendingCount: () => get().items.filter((i) => i.status === 'pending').length,
   answeredCount: () => get().items.filter((i) => i.status === 'answered').length,
@@ -91,5 +95,39 @@ export const useInboxStore = create<InboxState>((set, get) => ({
 
   setFilter: (filter: 'all' | 'pending' | 'answered') => {
     set({ filter });
+  },
+
+  executeAction: async (itemId: string, action: DetectedAction, projectId?: string) => {
+    set({ executingAction: true });
+    try {
+      await grokApi.executeAction(action, projectId);
+      // Mark the action as confirmed and remove from detected_actions
+      set((state) => ({
+        items: state.items.map((item) =>
+          item.id === itemId
+            ? {
+                ...item,
+                detected_actions: item.detected_actions.filter((a) => a !== action),
+              }
+            : item
+        ),
+        executingAction: false,
+      }));
+    } catch (error) {
+      set({ error: String(error), executingAction: false });
+    }
+  },
+
+  dismissAction: (itemId: string, actionIndex: number) => {
+    set((state) => ({
+      items: state.items.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              detected_actions: item.detected_actions.filter((_, i) => i !== actionIndex),
+            }
+          : item
+      ),
+    }));
   },
 }));

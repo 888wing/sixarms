@@ -66,6 +66,35 @@ impl Database {
                 UNIQUE(project_id, date)
             );
 
+            -- Milestones table
+            CREATE TABLE IF NOT EXISTS milestones (
+                id TEXT PRIMARY KEY,
+                project_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                version TEXT,
+                git_tag TEXT,
+                status TEXT NOT NULL DEFAULT 'planned',
+                source TEXT NOT NULL DEFAULT 'manual',
+                target_date TEXT,
+                completed_at TEXT,
+                created_at TEXT NOT NULL,
+                FOREIGN KEY (project_id) REFERENCES projects(id)
+            );
+
+            -- Cached Git Tags table
+            CREATE TABLE IF NOT EXISTS git_tags (
+                id TEXT PRIMARY KEY,
+                project_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                commit_hash TEXT NOT NULL,
+                date TEXT NOT NULL,
+                message TEXT,
+                first_seen_at TEXT NOT NULL,
+                FOREIGN KEY (project_id) REFERENCES projects(id),
+                UNIQUE(project_id, name)
+            );
+
             -- Todos table
             CREATE TABLE IF NOT EXISTS todos (
                 id TEXT PRIMARY KEY,
@@ -114,11 +143,36 @@ impl Database {
 
             -- Create indexes
             CREATE INDEX IF NOT EXISTS idx_daily_logs_project_date ON daily_logs(project_id, date);
+            CREATE INDEX IF NOT EXISTS idx_milestones_project ON milestones(project_id);
+            CREATE INDEX IF NOT EXISTS idx_milestones_status ON milestones(status);
+            CREATE INDEX IF NOT EXISTS idx_git_tags_project ON git_tags(project_id);
             CREATE INDEX IF NOT EXISTS idx_todos_project ON todos(project_id);
             CREATE INDEX IF NOT EXISTS idx_todos_status ON todos(status);
             CREATE INDEX IF NOT EXISTS idx_inbox_status ON inbox_items(status);
             CREATE INDEX IF NOT EXISTS idx_chat_project ON chat_messages(project_id);
         "#)?;
+
+        // Run migrations
+        self.run_migrations()?;
+
+        Ok(())
+    }
+
+    fn run_migrations(&self) -> SqlResult<()> {
+        let conn = self.get_conn()?;
+
+        // Check if source column exists in milestones
+        let has_source_column: bool = conn
+            .prepare("SELECT source FROM milestones LIMIT 1")
+            .is_ok();
+
+        if !has_source_column {
+            log::info!("Running migration: adding source column to milestones");
+            conn.execute(
+                "ALTER TABLE milestones ADD COLUMN source TEXT NOT NULL DEFAULT 'manual'",
+                [],
+            )?;
+        }
 
         Ok(())
     }
@@ -265,6 +319,215 @@ impl Database {
             ai_classification: row.get(6)?,
             user_override: row.get(7)?,
             created_at: chrono::DateTime::parse_from_rfc3339(&row.get::<_, String>(8)?)
+                .map(|dt| dt.with_timezone(&Utc))
+                .unwrap_or_else(|_| Utc::now()),
+        })
+    }
+
+    // ============================================
+    // Milestone Operations
+    // ============================================
+
+    pub fn create_milestone(&self, milestone: &Milestone) -> SqlResult<()> {
+        let conn = self.get_conn()?;
+        conn.execute(
+            "INSERT INTO milestones (id, project_id, title, description, version, git_tag, status, source, target_date, completed_at, created_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+            params![
+                milestone.id,
+                milestone.project_id,
+                milestone.title,
+                milestone.description,
+                milestone.version,
+                milestone.git_tag,
+                serde_json::to_string(&milestone.status).unwrap().trim_matches('"'),
+                serde_json::to_string(&milestone.source).unwrap().trim_matches('"'),
+                milestone.target_date,
+                milestone.completed_at.map(|dt| dt.to_rfc3339()),
+                milestone.created_at.to_rfc3339(),
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn get_milestones(&self, project_id: Option<&str>) -> SqlResult<Vec<Milestone>> {
+        let conn = self.get_conn()?;
+
+        let query = match project_id {
+            Some(_) => "SELECT id, project_id, title, description, version, git_tag, status, source, target_date, completed_at, created_at
+                        FROM milestones WHERE project_id = ?1 ORDER BY created_at DESC",
+            None => "SELECT id, project_id, title, description, version, git_tag, status, source, target_date, completed_at, created_at
+                     FROM milestones ORDER BY created_at DESC",
+        };
+
+        let mut stmt = conn.prepare(query)?;
+
+        let milestones = if let Some(pid) = project_id {
+            stmt.query_map(params![pid], Self::row_to_milestone)?
+                .collect::<Result<Vec<_>, _>>()?
+        } else {
+            stmt.query_map([], Self::row_to_milestone)?
+                .collect::<Result<Vec<_>, _>>()?
+        };
+
+        Ok(milestones)
+    }
+
+    pub fn milestone_exists_for_tag(&self, project_id: &str, git_tag: &str) -> SqlResult<bool> {
+        let conn = self.get_conn()?;
+        let count: i32 = conn.query_row(
+            "SELECT COUNT(*) FROM milestones WHERE project_id = ?1 AND git_tag = ?2",
+            params![project_id, git_tag],
+            |row| row.get(0),
+        )?;
+        Ok(count > 0)
+    }
+
+    pub fn update_milestone_status(&self, id: &str, status: MilestoneStatus) -> SqlResult<()> {
+        let conn = self.get_conn()?;
+        let completed_at = if status == MilestoneStatus::Completed {
+            Some(Utc::now().to_rfc3339())
+        } else {
+            None
+        };
+
+        conn.execute(
+            "UPDATE milestones SET status = ?1, completed_at = ?2 WHERE id = ?3",
+            params![
+                serde_json::to_string(&status).unwrap().trim_matches('"'),
+                completed_at,
+                id,
+            ],
+        )?;
+        Ok(())
+    }
+
+    pub fn delete_milestone(&self, id: &str) -> SqlResult<()> {
+        let conn = self.get_conn()?;
+        conn.execute("DELETE FROM milestones WHERE id = ?1", params![id])?;
+        Ok(())
+    }
+
+    fn row_to_milestone(row: &rusqlite::Row) -> rusqlite::Result<Milestone> {
+        let status_str: String = row.get(6)?;
+        let status = match status_str.as_str() {
+            "in_progress" => MilestoneStatus::InProgress,
+            "completed" => MilestoneStatus::Completed,
+            "cancelled" => MilestoneStatus::Cancelled,
+            _ => MilestoneStatus::Planned,
+        };
+
+        let source_str: String = row.get(7)?;
+        let source = match source_str.as_str() {
+            "tag" => MilestoneSource::Tag,
+            "ai" => MilestoneSource::Ai,
+            _ => MilestoneSource::Manual,
+        };
+
+        Ok(Milestone {
+            id: row.get(0)?,
+            project_id: row.get(1)?,
+            title: row.get(2)?,
+            description: row.get(3)?,
+            version: row.get(4)?,
+            git_tag: row.get(5)?,
+            status,
+            source,
+            target_date: row.get(8)?,
+            completed_at: row.get::<_, Option<String>>(9)?
+                .and_then(|s| chrono::DateTime::parse_from_rfc3339(&s).ok())
+                .map(|dt| dt.with_timezone(&Utc)),
+            created_at: chrono::DateTime::parse_from_rfc3339(&row.get::<_, String>(10)?)
+                .map(|dt| dt.with_timezone(&Utc))
+                .unwrap_or_else(|_| Utc::now()),
+        })
+    }
+
+    // ============================================
+    // Git Tags Operations
+    // ============================================
+
+    pub fn upsert_git_tag(&self, tag: &CachedGitTag) -> SqlResult<bool> {
+        let conn = self.get_conn()?;
+
+        // Check if tag already exists
+        let existing: Option<String> = conn
+            .query_row(
+                "SELECT id FROM git_tags WHERE project_id = ?1 AND name = ?2",
+                params![tag.project_id, tag.name],
+                |row| row.get(0),
+            )
+            .ok();
+
+        if existing.is_some() {
+            // Update existing tag
+            conn.execute(
+                "UPDATE git_tags SET commit_hash = ?1, date = ?2, message = ?3 WHERE project_id = ?4 AND name = ?5",
+                params![tag.commit_hash, tag.date, tag.message, tag.project_id, tag.name],
+            )?;
+            Ok(false) // Not a new tag
+        } else {
+            // Insert new tag
+            conn.execute(
+                "INSERT INTO git_tags (id, project_id, name, commit_hash, date, message, first_seen_at)
+                 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                params![
+                    tag.id,
+                    tag.project_id,
+                    tag.name,
+                    tag.commit_hash,
+                    tag.date,
+                    tag.message,
+                    tag.first_seen_at.to_rfc3339(),
+                ],
+            )?;
+            Ok(true) // New tag
+        }
+    }
+
+    pub fn get_cached_git_tags(&self, project_id: &str) -> SqlResult<Vec<CachedGitTag>> {
+        let conn = self.get_conn()?;
+        let mut stmt = conn.prepare(
+            "SELECT id, project_id, name, commit_hash, date, message, first_seen_at
+             FROM git_tags WHERE project_id = ?1 ORDER BY date DESC"
+        )?;
+
+        let tags = stmt
+            .query_map(params![project_id], Self::row_to_cached_git_tag)?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(tags)
+    }
+
+    pub fn get_all_cached_git_tags(&self) -> SqlResult<Vec<CachedGitTag>> {
+        let conn = self.get_conn()?;
+        let mut stmt = conn.prepare(
+            "SELECT id, project_id, name, commit_hash, date, message, first_seen_at
+             FROM git_tags ORDER BY date DESC"
+        )?;
+
+        let tags = stmt
+            .query_map([], Self::row_to_cached_git_tag)?
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(tags)
+    }
+
+    pub fn delete_git_tags_for_project(&self, project_id: &str) -> SqlResult<()> {
+        let conn = self.get_conn()?;
+        conn.execute("DELETE FROM git_tags WHERE project_id = ?1", params![project_id])?;
+        Ok(())
+    }
+
+    fn row_to_cached_git_tag(row: &rusqlite::Row) -> rusqlite::Result<CachedGitTag> {
+        Ok(CachedGitTag {
+            id: row.get(0)?,
+            project_id: row.get(1)?,
+            name: row.get(2)?,
+            commit_hash: row.get(3)?,
+            date: row.get(4)?,
+            message: row.get(5)?,
+            first_seen_at: chrono::DateTime::parse_from_rfc3339(&row.get::<_, String>(6)?)
                 .map(|dt| dt.with_timezone(&Utc))
                 .unwrap_or_else(|_| Utc::now()),
         })
@@ -462,6 +725,7 @@ impl Database {
             question: row.get(3)?,
             context: row.get(4)?,
             suggested_actions,
+            detected_actions: Vec::new(), // AI-detected actions are generated at runtime
             status,
             answer: row.get(7)?,
             created_at: chrono::DateTime::parse_from_rfc3339(&row.get::<_, String>(8)?)

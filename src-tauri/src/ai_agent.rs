@@ -1,5 +1,8 @@
 use crate::grok::{GrokClient, GrokMessage};
-use crate::models::{DailyLog, InboxItem, InboxItemType, Project, GitDiffResult, SuggestedAction};
+use crate::models::{
+    ActionData, ConversationIntent, DailyLog, DetectedAction, GitDiffResult,
+    InboxItem, InboxItemType, Project, SuggestedAction,
+};
 use serde::{Deserialize, Serialize};
 
 /// AI Agent for analyzing development patterns and generating insights
@@ -163,13 +166,27 @@ impl AiAgent {
             analysis.insights.join("\n")
         ));
 
-        // Add suggested actions
+        // Add suggested actions (legacy display)
         item.suggested_actions = analysis.suggested_todos.iter()
             .enumerate()
             .map(|(i, todo)| SuggestedAction {
                 id: format!("todo_{}", i),
                 label: todo.clone(),
                 icon: Some("check-circle".to_string()),
+            })
+            .collect();
+
+        // Add executable detected actions (new action system)
+        item.detected_actions = analysis.suggested_todos.iter()
+            .map(|todo| DetectedAction {
+                intent: ConversationIntent::CreateTodo,
+                confidence: 0.85,
+                data: ActionData::Todo {
+                    title: todo.clone(),
+                    priority: Some("medium".to_string()),
+                    due_date: None,
+                },
+                confirmed: false,
             })
             .collect();
 

@@ -2,6 +2,7 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use crate::models::AiResponseWithActions;
 
 const GROK_API_URL: &str = "https://api.x.ai/v1/chat/completions";
 
@@ -258,6 +259,113 @@ impl GrokClient {
         });
 
         self.chat(messages).await
+    }
+
+    /// Chat with intent detection - returns structured response with actions
+    pub async fn chat_with_intent_detection(
+        &self,
+        user_message: &str,
+        history: Vec<ChatHistoryItem>,
+        project_context: Option<&str>,
+        _project_id: Option<&str>,
+    ) -> Result<AiResponseWithActions, String> {
+        let system_prompt = format!(
+            r#"你係 Sixarms，一個 AI 開發進度追蹤助手。你用廣東話同用戶溝通。
+
+你嘅職責：
+1. 幫用戶記錄每日嘅開發進度
+2. 識別用戶意圖並建議相應動作
+3. 管理 TODO 清單
+4. 追蹤項目進度
+
+{}
+
+重要：你需要分析用戶訊息，識別以下意圖：
+- create_todo: 用戶想創建待辦事項（關鍵詞：要做、待辦、todo、記住、提醒、之後要）
+- log_progress: 用戶描述完成嘅工作（關鍵詞：完成、做咗、實現咗、修復咗、搞掂）
+- create_inbox_item: 需要跟進或確認嘅事項
+- general_chat: 一般對話
+
+回覆格式必須係 JSON：
+{{
+  "message": "你嘅回覆內容（用廣東話，友善專業）",
+  "detected_actions": [
+    {{
+      "intent": "create_todo|log_progress|create_inbox_item|general_chat",
+      "confidence": 0.0-1.0,
+      "data": {{
+        "type": "todo|progress|inbox|none",
+        ...
+      }},
+      "confirmed": false
+    }}
+  ]
+}}
+
+data 格式：
+- create_todo: {{"type": "todo", "title": "任務標題", "priority": "low|medium|high|urgent", "due_date": null}}
+- log_progress: {{"type": "progress", "summary": "進度摘要", "category": "feature|bugfix|refactor|ui|docs|test|chore|other", "date": null}}
+- create_inbox_item: {{"type": "inbox", "question": "需要跟進嘅問題", "item_type": "todo_followup|planning"}}
+- general_chat: {{"type": "none"}}
+
+請用友善、專業嘅語氣回應，並準確識別用戶意圖。只輸出 JSON，唔好有其他內容。"#,
+            project_context.map(|c| format!("當前項目背景：\n{}", c)).unwrap_or_default()
+        );
+
+        let mut messages = vec![
+            GrokMessage {
+                role: "system".to_string(),
+                content: system_prompt,
+            },
+        ];
+
+        // Add truncated history
+        let truncated = self.truncate_history(history, 3000);
+        for item in truncated {
+            messages.push(GrokMessage {
+                role: item.role,
+                content: item.content,
+            });
+        }
+
+        // Add current user message
+        messages.push(GrokMessage {
+            role: "user".to_string(),
+            content: user_message.to_string(),
+        });
+
+        let response = self.chat(messages).await?;
+
+        // Try to extract JSON from response (handle markdown code blocks)
+        let json_str = if response.contains("```json") {
+            response
+                .split("```json")
+                .nth(1)
+                .and_then(|s| s.split("```").next())
+                .unwrap_or(&response)
+                .trim()
+        } else if response.contains("```") {
+            response
+                .split("```")
+                .nth(1)
+                .unwrap_or(&response)
+                .trim()
+        } else {
+            response.trim()
+        };
+
+        // Try to parse as structured response
+        match serde_json::from_str::<AiResponseWithActions>(json_str) {
+            Ok(parsed) => Ok(parsed),
+            Err(e) => {
+                log::warn!("Failed to parse AI response as JSON: {}, response: {}", e, &response);
+                // Fallback: wrap plain text response
+                Ok(AiResponseWithActions {
+                    message: response,
+                    detected_actions: vec![],
+                })
+            }
+        }
     }
 }
 

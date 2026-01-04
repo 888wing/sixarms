@@ -141,6 +141,10 @@ pub fn run() {
             commands::delete_project,
             commands::get_daily_logs,
             commands::create_daily_log,
+            commands::get_milestones,
+            commands::create_milestone,
+            commands::update_milestone_status,
+            commands::delete_milestone,
             commands::get_todos,
             commands::create_todo,
             commands::update_todo_status,
@@ -164,6 +168,8 @@ pub fn run() {
             grok_commands::classify_with_grok,
             grok_commands::generate_summary_with_grok,
             grok_commands::send_grok_messages,
+            grok_commands::chat_with_intent,
+            grok_commands::execute_detected_action,
             // Scanner commands
             scanner_commands::scan_today,
             scanner_commands::scan_range,
@@ -173,6 +179,8 @@ pub fn run() {
             scanner_commands::is_git_repo,
             scanner_commands::format_changes,
             scanner_commands::get_git_tags,
+            scanner_commands::sync_git_tags,
+            scanner_commands::get_cached_tags,
             // Scheduler commands
             scheduler_commands::start_scheduler,
             scheduler_commands::stop_scheduler,
