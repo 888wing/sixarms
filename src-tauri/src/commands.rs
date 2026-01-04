@@ -1,4 +1,4 @@
-use tauri::State;
+use tauri::{State, Emitter};
 use crate::db::Database;
 use crate::models::*;
 
@@ -58,6 +58,7 @@ pub fn get_daily_logs(db: State<Database>, project_id: Option<String>, limit: Op
 #[tauri::command]
 pub fn create_daily_log(
     db: State<Database>,
+    app: tauri::AppHandle,
     project_id: String,
     date: String,
     summary: String,
@@ -87,6 +88,10 @@ pub fn create_daily_log(
     };
 
     db.create_daily_log(&log).map_err(|e| e.to_string())?;
+
+    // Emit event to notify frontend
+    let _ = app.emit("data:daily-log-updated", ());
+
     Ok(log)
 }
 
@@ -183,6 +188,7 @@ pub fn get_todos(db: State<Database>, status: Option<String>) -> Result<Vec<Todo
 #[tauri::command]
 pub fn create_todo(
     db: State<Database>,
+    app: tauri::AppHandle,
     title: String,
     project_id: Option<String>,
     priority: Option<String>,
@@ -202,11 +208,15 @@ pub fn create_todo(
     todo.due_date = due_date;
 
     db.create_todo(&todo).map_err(|e| e.to_string())?;
+
+    // Emit event to notify frontend
+    let _ = app.emit("data:todo-updated", ());
+
     Ok(todo)
 }
 
 #[tauri::command]
-pub fn update_todo_status(db: State<Database>, id: String, status: String) -> Result<(), String> {
+pub fn update_todo_status(db: State<Database>, app: tauri::AppHandle, id: String, status: String) -> Result<(), String> {
     let status = match status.as_str() {
         "pending" => TodoStatus::Pending,
         "in_progress" => TodoStatus::InProgress,
@@ -214,12 +224,38 @@ pub fn update_todo_status(db: State<Database>, id: String, status: String) -> Re
         "cancelled" => TodoStatus::Cancelled,
         _ => return Err("Invalid status".to_string()),
     };
-    db.update_todo_status(&id, status).map_err(|e| e.to_string())
+    db.update_todo_status(&id, status).map_err(|e| e.to_string())?;
+
+    // Emit event to notify frontend
+    let _ = app.emit("data:todo-updated", ());
+
+    Ok(())
 }
 
 #[tauri::command]
-pub fn delete_todo(db: State<Database>, id: String) -> Result<(), String> {
-    db.delete_todo(&id).map_err(|e| e.to_string())
+pub fn delete_todo(db: State<Database>, app: tauri::AppHandle, id: String) -> Result<(), String> {
+    db.delete_todo(&id).map_err(|e| e.to_string())?;
+
+    // Emit event to notify frontend
+    let _ = app.emit("data:todo-updated", ());
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn move_todo(
+    db: State<Database>,
+    app: tauri::AppHandle,
+    id: String,
+    column: String,
+    position: i32,
+) -> Result<(), String> {
+    db.move_todo(&id, &column, position).map_err(|e| e.to_string())?;
+
+    // Emit event to notify frontend
+    let _ = app.emit("data:todo-updated", ());
+
+    Ok(())
 }
 
 // ============================================
@@ -238,13 +274,19 @@ pub fn get_inbox_items(db: State<Database>, status: Option<String>) -> Result<Ve
 }
 
 #[tauri::command]
-pub fn answer_inbox_item(db: State<Database>, id: String, answer: String) -> Result<(), String> {
-    db.answer_inbox_item(&id, &answer).map_err(|e| e.to_string())
+pub fn answer_inbox_item(db: State<Database>, app: tauri::AppHandle, id: String, answer: String) -> Result<(), String> {
+    db.answer_inbox_item(&id, &answer).map_err(|e| e.to_string())?;
+
+    // Emit event to notify frontend
+    let _ = app.emit("data:inbox-updated", ());
+
+    Ok(())
 }
 
 #[tauri::command]
 pub fn create_inbox_item(
     db: State<Database>,
+    app: tauri::AppHandle,
     item_type: String,
     question: String,
     project_id: Option<String>,
@@ -262,6 +304,10 @@ pub fn create_inbox_item(
     item.context = context;
 
     db.create_inbox_item(&item).map_err(|e| e.to_string())?;
+
+    // Emit event to notify frontend
+    let _ = app.emit("data:inbox-updated", ());
+
     Ok(item)
 }
 

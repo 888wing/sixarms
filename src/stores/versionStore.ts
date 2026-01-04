@@ -84,6 +84,7 @@ export const useVersionStore = create<VersionState>((set, get) => ({
       set({
         gitTags: tags,
         tagsLoading: false,
+        lastSyncTime: new Date().toISOString(),
         error: errors[0] ?? null,
       });
     } catch (error) {

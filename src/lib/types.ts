@@ -41,12 +41,15 @@ export interface Todo {
   priority: TodoPriority;
   status: TodoStatus;
   due_date?: string;
+  column: TodoColumn;
+  position: number;
   created_at: string;
   completed_at?: string;
 }
 
 export type TodoPriority = 'low' | 'medium' | 'high' | 'urgent';
 export type TodoStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled';
+export type TodoColumn = 'backlog' | 'in_progress' | 'done';
 
 // ============================================
 // Inbox Types
@@ -66,7 +69,7 @@ export interface InboxItem {
   answered_at?: string;
 }
 
-export type InboxItemType = 'daily_summary' | 'classification' | 'todo_followup' | 'planning' | 'stale_project';
+export type InboxItemType = 'daily_summary' | 'classification' | 'todo_followup' | 'planning' | 'stale_project' | 'anomaly_detection' | 'weekly_review' | 'pattern_insight' | 'major_update';
 
 export interface SuggestedAction {
   id: string;

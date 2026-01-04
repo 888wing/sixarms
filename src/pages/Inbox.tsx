@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Check, Clock, MessageSquare, Loader2, ListTodo, X } from "lucide-react";
 import { useInboxStore } from "../stores/inboxStore";
 import { useProjectStore } from "../stores/projectStore";
+import { ProjectSelector } from "../components/ProjectSelector";
 import type { InboxItem, DetectedAction } from "../lib/types";
 
 // Action suggestion component for detected_actions
@@ -289,8 +290,6 @@ export function Inbox() {
     loading,
     filter,
     executingAction,
-    pendingCount,
-    answeredCount,
     filteredItems,
     fetchItems,
     answerItem,
@@ -299,12 +298,29 @@ export function Inbox() {
     dismissAction,
   } = useInboxStore();
 
-  const { fetchProjects } = useProjectStore();
+  const { selectedProjectId, fetchProjects } = useProjectStore();
 
   useEffect(() => {
     fetchProjects();
     fetchItems();
   }, [fetchProjects, fetchItems]);
+
+  // Filter items by selected project
+  const projectFilteredItems = useMemo(() => {
+    const items = filteredItems();
+    if (!selectedProjectId) return items;
+    return items.filter((item) => item.project_id === selectedProjectId);
+  }, [filteredItems, selectedProjectId]);
+
+  // Calculate pending/answered counts for filtered items
+  const filteredPendingCount = useMemo(
+    () => projectFilteredItems.filter((i) => i.status === "pending").length,
+    [projectFilteredItems]
+  );
+  const filteredAnsweredCount = useMemo(
+    () => projectFilteredItems.filter((i) => i.status === "answered").length,
+    [projectFilteredItems]
+  );
 
   const handleAnswer = async (id: string, answer: string) => {
     await answerItem(id, answer);
@@ -355,8 +371,7 @@ export function Inbox() {
     return groups;
   };
 
-  const displayItems = filteredItems();
-  const groupedItems = groupByDate(displayItems);
+  const groupedItems = groupByDate(projectFilteredItems);
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
@@ -370,12 +385,14 @@ export function Inbox() {
           <h1 className="section-header text-2xl">INBOX</h1>
           <div className="flex items-center gap-4 text-sm">
             <span className="text-accent-rose font-mono">
-              [{pendingCount()}] Pending
+              [{filteredPendingCount}] Pending
             </span>
             <span className="text-text-muted">·</span>
             <span className="text-text-secondary font-mono">
-              {answeredCount()} Processed
+              {filteredAnsweredCount} Processed
             </span>
+            <span className="text-text-muted">·</span>
+            <ProjectSelector />
           </div>
         </div>
 

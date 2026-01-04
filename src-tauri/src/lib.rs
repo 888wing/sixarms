@@ -6,7 +6,9 @@ mod grok_commands;
 mod keychain;
 mod models;
 mod notification;
+mod quick_entry;
 mod scheduler;
+mod slash_commands;
 mod scheduler_commands;
 mod scanner;
 mod scanner_commands;
@@ -99,7 +101,7 @@ pub fn run() {
                 )?;
             }
 
-            // Register global shortcut ⌘+Shift+D (Cmd+Shift+D on macOS)
+            // Register global shortcut ⌘+Shift+D (Cmd+Shift+D on macOS) for Quick Entry
             #[cfg(desktop)]
             {
                 let shortcut = Shortcut::new(Some(Modifiers::SUPER | Modifiers::SHIFT), Code::KeyD);
@@ -109,10 +111,7 @@ pub fn run() {
                     tauri_plugin_global_shortcut::Builder::new()
                         .with_handler(move |_app, _shortcut, event| {
                             if event.state() == tauri_plugin_global_shortcut::ShortcutState::Pressed {
-                                if let Some(window) = app_handle.get_webview_window("main") {
-                                    let _ = window.show();
-                                    let _ = window.set_focus();
-                                }
+                                let _ = quick_entry::toggle_quick_entry(&app_handle);
                             }
                         })
                         .build(),
@@ -149,6 +148,7 @@ pub fn run() {
             commands::create_todo,
             commands::update_todo_status,
             commands::delete_todo,
+            commands::move_todo,
             commands::get_inbox_items,
             commands::answer_inbox_item,
             commands::create_inbox_item,
@@ -186,6 +186,11 @@ pub fn run() {
             scheduler_commands::stop_scheduler,
             scheduler_commands::get_scheduler_status,
             scheduler_commands::trigger_manual_scan,
+            // Quick Entry commands
+            quick_entry::show_quick_entry,
+            quick_entry::hide_quick_entry,
+            // Slash commands
+            slash_commands::execute_slash_command,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -78,6 +78,8 @@ pub struct Todo {
     pub priority: TodoPriority,
     pub status: TodoStatus,
     pub due_date: Option<String>, // YYYY-MM-DD format
+    pub column: String,           // Kanban column: 'backlog' | 'in_progress' | 'done'
+    pub position: i32,            // Sort position within column
     pub created_at: DateTime<Utc>,
     pub completed_at: Option<DateTime<Utc>>,
 }
@@ -143,6 +145,7 @@ pub enum InboxItemType {
     AnomalyDetection,    // 異常偵測
     WeeklyReview,        // 每週回顧
     PatternInsight,      // 模式洞察
+    MajorUpdate,         // 重大更新偵測
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -568,6 +571,8 @@ impl Todo {
             priority: TodoPriority::Medium,
             status: TodoStatus::Pending,
             due_date: None,
+            column: "backlog".to_string(),
+            position: 0,
             created_at: Utc::now(),
             completed_at: None,
         }

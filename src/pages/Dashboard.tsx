@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Calendar, TrendingUp, PieChart, Award, Loader2, BarChart3 } from "lucide-react";
 import { useStatsStore } from "../stores/statsStore";
 import { useTodoStore } from "../stores/todoStore";
 import { useProjectStore } from "../stores/projectStore";
+import { ProjectSelector } from "../components/ProjectSelector";
 
 const categoryColors: Record<string, string> = {
   feature: "accent-green",
@@ -38,7 +39,7 @@ export function Dashboard() {
   } = useStatsStore();
 
   const { todos, fetchTodos } = useTodoStore();
-  const { projects, fetchProjects } = useProjectStore();
+  const { projects, selectedProjectId, fetchProjects } = useProjectStore();
 
   useEffect(() => {
     fetchAllStats();
@@ -46,12 +47,18 @@ export function Dashboard() {
     fetchProjects();
   }, [fetchAllStats, fetchTodos, fetchProjects]);
 
-  // Calculate todo stats
-  const completedTodos = todos.filter((t) => t.status === "completed").length;
-  const pendingTodos = todos.filter(
+  // Filter todos by selected project
+  const filteredTodos = useMemo(() => {
+    if (!selectedProjectId) return todos;
+    return todos.filter((t) => t.project_id === selectedProjectId);
+  }, [todos, selectedProjectId]);
+
+  // Calculate todo stats from filtered todos
+  const completedTodos = filteredTodos.filter((t) => t.status === "completed").length;
+  const pendingTodos = filteredTodos.filter(
     (t) => t.status === "pending" || t.status === "in_progress"
   ).length;
-  const totalTodos = todos.length;
+  const totalTodos = filteredTodos.length;
 
   // Generate heatmap data from activity data
   const generateHeatmapData = () => {
@@ -138,15 +145,18 @@ export function Dashboard() {
         className="flex items-center justify-between mb-8"
       >
         <h1 className="section-header text-2xl">DASHBOARD</h1>
-        <select
-          value={timeRange}
-          onChange={(e) => setTimeRange(e.target.value as typeof timeRange)}
-          className="terminal-input text-sm py-2"
-        >
-          <option value="month">This Month</option>
-          <option value="quarter">This Quarter</option>
-          <option value="year">This Year</option>
-        </select>
+        <div className="flex items-center gap-4">
+          <ProjectSelector />
+          <select
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value as typeof timeRange)}
+            className="terminal-input text-sm py-2"
+          >
+            <option value="month">This Month</option>
+            <option value="quarter">This Quarter</option>
+            <option value="year">This Year</option>
+          </select>
+        </div>
       </motion.header>
 
       {statsLoading ? (

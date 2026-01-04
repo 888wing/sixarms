@@ -23,6 +23,8 @@ const createMockTodo = (overrides: Partial<Todo> = {}): Todo => ({
   title: 'Test Todo',
   priority: 'medium',
   status: 'pending',
+  column: 'backlog',
+  position: 0,
   created_at: '2025-01-01T00:00:00Z',
   ...overrides,
 })

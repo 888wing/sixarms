@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Tag,
   Milestone as MilestoneIcon,
@@ -8,10 +8,11 @@ import {
   Calendar,
   GitBranch,
   RefreshCw,
-  ChevronDown,
+  Clock,
 } from 'lucide-react';
 import { useVersionStore } from '../stores/versionStore';
 import { useProjectStore } from '../stores/projectStore';
+import { ProjectSelector } from './ProjectSelector';
 import type { MilestoneStatus, MilestoneSource } from '../lib/types';
 
 const statusColors: Record<MilestoneStatus, string> = {
@@ -46,6 +47,7 @@ export function VersionTracking() {
     milestones,
     tagsLoading,
     milestonesLoading,
+    lastSyncTime,
     fetchGitTags,
     fetchMilestones,
     addMilestone,
@@ -55,7 +57,6 @@ export function VersionTracking() {
   const {
     projects,
     selectedProjectId,
-    selectProject,
     fetchProjects,
   } = useProjectStore();
   const [showNewMilestone, setShowNewMilestone] = useState(false);
@@ -63,8 +64,6 @@ export function VersionTracking() {
   const [newVersion, setNewVersion] = useState('');
   const [newDescription, setNewDescription] = useState('');
   const [activeTab, setActiveTab] = useState<'tags' | 'milestones'>('tags');
-  const [showProjectMenu, setShowProjectMenu] = useState(false);
-  const projectMenuRef = useRef<HTMLDivElement>(null);
 
   const selectedProject = selectedProjectId
     ? projects.find((p) => p.id === selectedProjectId)
@@ -99,15 +98,9 @@ export function VersionTracking() {
     }
   }, [projectsForTags, selectedProjectId, fetchGitTags]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (projectMenuRef.current && !projectMenuRef.current.contains(event.target as Node)) {
-        setShowProjectMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const handleProjectChange = () => {
+    setShowNewMilestone(false);
+  };
 
   const handleAddMilestone = async () => {
     if (!newTitle.trim() || !selectedProject) return;
@@ -149,12 +142,6 @@ export function VersionTracking() {
     return new Map(projects.map((project) => [project.id, project.name]));
   }, [projects]);
 
-  const handleProjectSelect = (id: string | null) => {
-    selectProject(id);
-    setShowProjectMenu(false);
-    setShowNewMilestone(false);
-  };
-
   const handleRefreshTags = () => {
     fetchGitTags(projectsForTags, selectedProjectId);
   };
@@ -168,6 +155,27 @@ export function VersionTracking() {
     });
   };
 
+  const formatLastSyncTime = (isoStr: string | null) => {
+    if (!isoStr) return null;
+    const date = new Date(isoStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return '剛剛';
+    if (diffMins < 60) return `${diffMins} 分鐘前`;
+
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} 小時前`;
+
+    return date.toLocaleDateString('zh-HK', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -177,6 +185,13 @@ export function VersionTracking() {
           <h2 className="text-lg font-semibold text-white">版本追蹤</h2>
         </div>
         <div className="flex items-center gap-3">
+          {/* Last sync time */}
+          {lastSyncTime && (
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <Clock className="w-3 h-3" />
+              <span>更新於 {formatLastSyncTime(lastSyncTime)}</span>
+            </div>
+          )}
           <button
             onClick={handleRefreshTags}
             disabled={tagsLoading}
@@ -186,50 +201,14 @@ export function VersionTracking() {
                 : 'text-gray-400 border-gray-700 hover:border-purple-500 hover:text-purple-400'
             }`}
           >
-            <RefreshCw className="w-3 h-3" />
+            <RefreshCw className={`w-3 h-3 ${tagsLoading ? 'animate-spin' : ''}`} />
             重新整理
           </button>
-          <div className="relative" ref={projectMenuRef}>
-            <button
-              onClick={() => setShowProjectMenu(!showProjectMenu)}
-              className="flex items-center gap-2 text-gray-400 hover:text-purple-400 transition-colors"
-            >
-              <span className="text-sm">{selectedProject ? '📁' : '🌐'}</span>
-              <span className="text-sm">
-                {selectedProject?.name ?? '全部專案'}
-              </span>
-              <ChevronDown className="w-4 h-4" />
-            </button>
-
-            {showProjectMenu && (
-              <div className="absolute right-0 top-full mt-2 bg-gray-900 border border-gray-700 rounded shadow-lg z-10 min-w-[200px]">
-                <button
-                  onClick={() => handleProjectSelect(null)}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition-colors ${
-                    !selectedProjectId ? 'text-purple-400' : 'text-gray-300'
-                  }`}
-                >
-                  🌐 全部專案
-                </button>
-                {activeProjects.map((project) => (
-                  <button
-                    key={project.id}
-                    onClick={() => handleProjectSelect(project.id)}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-800 transition-colors ${
-                      selectedProjectId === project.id ? 'text-purple-400' : 'text-gray-300'
-                    }`}
-                  >
-                    📁 {project.name}
-                  </button>
-                ))}
-                {activeProjects.length === 0 && (
-                  <div className="px-4 py-2 text-sm text-gray-500">
-                    沒有可用專案
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <ProjectSelector
+            allLabel="全部專案"
+            accentColor="text-purple-400"
+            onProjectChange={handleProjectChange}
+          />
         </div>
       </div>
 

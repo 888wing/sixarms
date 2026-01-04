@@ -355,6 +355,61 @@ impl Scheduler {
                     }
                 }
             }
+
+            // Check for major update and create inbox suggestion
+            if settings.version.auto_major_updates {
+                let threshold = &settings.version.major_update_threshold;
+                let files_count = diff.files.len() as u32;
+                let is_major = files_count >= threshold.files_changed
+                    || diff.total_additions as u32 >= threshold.additions
+                    || diff.total_deletions as u32 >= threshold.deletions;
+
+                if is_major {
+                    let question = format!(
+                        "偵測到 {} 的重大更新：{}個檔案變更，+{} 行，-{} 行。要記錄為里程碑嗎？",
+                        project.name,
+                        files_count,
+                        diff.total_additions,
+                        diff.total_deletions
+                    );
+
+                    let mut inbox_item = crate::models::InboxItem::new(
+                        crate::models::InboxItemType::MajorUpdate,
+                        question,
+                        Some(project.id.clone()),
+                    );
+
+                    // Add context about the changes
+                    let file_names: Vec<String> = diff.files.iter().map(|f| f.path.clone()).collect();
+                    inbox_item.context = Some(format!(
+                        "檔案: {}\n新增行數: {}\n刪除行數: {}",
+                        file_names.join(", "),
+                        diff.total_additions,
+                        diff.total_deletions
+                    ));
+
+                    // Add suggested action to create milestone
+                    inbox_item.suggested_actions = vec![
+                        crate::models::SuggestedAction {
+                            id: "create_milestone".to_string(),
+                            label: "建立里程碑".to_string(),
+                            icon: Some("milestone".to_string()),
+                        },
+                        crate::models::SuggestedAction {
+                            id: "skip".to_string(),
+                            label: "略過".to_string(),
+                            icon: Some("x".to_string()),
+                        },
+                    ];
+
+                    if let Err(e) = db.create_inbox_item(&inbox_item) {
+                        log::error!("Failed to create major update inbox item: {}", e);
+                    } else {
+                        inbox_items_created += 1;
+                        log::info!("Created major update suggestion for {}", project.name);
+                    }
+                }
+            }
         }
 
         // Sync git tags if version tracking is enabled

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { todoApi } from '../lib/api';
-import type { Todo, TodoStatus } from '../lib/types';
+import type { Todo, TodoStatus, TodoColumn } from '../lib/types';
 
 interface TodoState {
   todos: Todo[];
@@ -21,6 +21,7 @@ interface TodoState {
     dueDate?: string
   ) => Promise<Todo | null>;
   updateTodoStatus: (id: string, status: TodoStatus) => Promise<void>;
+  moveTodo: (id: string, column: TodoColumn, position: number) => Promise<void>;
   deleteTodo: (id: string) => Promise<void>;
 }
 
@@ -86,6 +87,20 @@ export const useTodoStore = create<TodoState>((set, get) => ({
                 completed_at: status === 'completed' ? new Date().toISOString() : t.completed_at,
               }
             : t
+        ),
+      }));
+    } catch (error) {
+      set({ error: String(error) });
+    }
+  },
+
+  moveTodo: async (id: string, column: TodoColumn, position: number) => {
+    try {
+      await todoApi.move(id, column, position);
+      // Optimistic update
+      set((state) => ({
+        todos: state.todos.map((t) =>
+          t.id === id ? { ...t, column, position } : t
         ),
       }));
     } catch (error) {

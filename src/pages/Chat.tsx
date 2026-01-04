@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, ChevronDown, Loader2, AlertCircle, RefreshCw, ListTodo, FileText, CheckCircle, X } from "lucide-react";
+import { Send, Loader2, AlertCircle, RefreshCw, ListTodo, FileText, CheckCircle, X, Terminal } from "lucide-react";
 import { useChatStore } from "../stores/chatStore";
 import { useProjectStore } from "../stores/projectStore";
 import { useSettingsStore } from "../stores/settingsStore";
+import { ProjectSelector } from "../components/ProjectSelector";
+import { CommandResponse } from "../components/chat/CommandResponse";
+import { slashApi, type CommandResult } from "../lib/api";
 import type { ChatMessage, ChatAction, DetectedAction } from "../lib/types";
 
 function ActionCard({ action }: { action?: ChatAction }) {
@@ -153,9 +156,9 @@ function ActionSuggestion({
 
 export function Chat() {
   const [input, setInput] = useState("");
-  const [showProjectMenu, setShowProjectMenu] = useState(false);
+  const [commandResults, setCommandResults] = useState<CommandResult[]>([]);
+  const [executingCommand, setExecutingCommand] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const projectMenuRef = useRef<HTMLDivElement>(null);
 
   const {
     messages,
@@ -170,25 +173,17 @@ export function Chat() {
     dismissAction,
   } = useChatStore();
 
-  const {
-    projects,
-    selectedProjectId,
-    fetchProjects,
-    selectProject,
-  } = useProjectStore();
+  const { selectedProjectId } = useProjectStore();
 
   const { hasApiKey, checkApiKey } = useSettingsStore();
-
-  const selectedProject = projects.find((p) => p.id === selectedProjectId);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
-    fetchProjects();
     checkApiKey();
-  }, [fetchProjects, checkApiKey]);
+  }, [checkApiKey]);
 
   useEffect(() => {
     fetchMessages(selectedProjectId ?? undefined, 50);
@@ -196,28 +191,36 @@ export function Chat() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (projectMenuRef.current && !projectMenuRef.current.contains(event.target as Node)) {
-        setShowProjectMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [messages, commandResults]);
 
   const handleSend = async () => {
-    if (!input.trim() || sending) return;
-    const content = input;
+    if (!input.trim() || sending || executingCommand) return;
+    const content = input.trim();
     setInput("");
-    await sendMessage(content, selectedProjectId ?? undefined);
-  };
 
-  const handleProjectSelect = (id: string | null) => {
-    selectProject(id);
-    setShowProjectMenu(false);
+    // Check if input is a slash command
+    if (content.startsWith("/")) {
+      setExecutingCommand(true);
+      try {
+        const result = await slashApi.execute(content, selectedProjectId ?? undefined);
+        setCommandResults((prev) => [...prev, result]);
+      } catch (err) {
+        setCommandResults((prev) => [
+          ...prev,
+          {
+            success: false,
+            command: content.split(" ")[0],
+            message: `Error executing command: ${err instanceof Error ? err.message : "Unknown error"}`,
+          },
+        ]);
+      } finally {
+        setExecutingCommand(false);
+      }
+      return;
+    }
+
+    // Regular chat message
+    await sendMessage(content, selectedProjectId ?? undefined);
   };
 
   return (
@@ -229,47 +232,7 @@ export function Chat() {
         className="p-4 border-b border-border-subtle flex items-center justify-between"
       >
         <h1 className="section-header text-xl">CHAT</h1>
-        <div className="relative" ref={projectMenuRef}>
-          <button
-            onClick={() => setShowProjectMenu(!showProjectMenu)}
-            className="flex items-center gap-2 text-text-secondary hover:text-accent-cyan transition-colors"
-          >
-            <span className="text-lg">{selectedProject ? "📁" : "🌐"}</span>
-            <span className="font-mono text-sm">
-              {selectedProject?.name ?? "All Projects"}
-            </span>
-            <ChevronDown size={16} />
-          </button>
-
-          {showProjectMenu && (
-            <div className="absolute right-0 top-full mt-2 bg-bg-elevated border border-border-subtle rounded shadow-lg z-10 min-w-[200px]">
-              <button
-                onClick={() => handleProjectSelect(null)}
-                className={`w-full text-left px-4 py-2 text-sm hover:bg-bg-secondary transition-colors ${
-                  !selectedProjectId ? "text-accent-cyan" : "text-text-secondary"
-                }`}
-              >
-                🌐 All Projects
-              </button>
-              {projects.filter(p => p.status === 'active').map((project) => (
-                <button
-                  key={project.id}
-                  onClick={() => handleProjectSelect(project.id)}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-bg-secondary transition-colors ${
-                    selectedProjectId === project.id ? "text-accent-cyan" : "text-text-secondary"
-                  }`}
-                >
-                  📁 {project.name}
-                </button>
-              ))}
-              {projects.filter(p => p.status === 'active').length === 0 && (
-                <div className="px-4 py-2 text-sm text-text-muted">
-                  No active projects
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <ProjectSelector />
       </motion.header>
 
       {/* API Key Warning */}
@@ -314,6 +277,37 @@ export function Chat() {
               </motion.div>
             ))}
           </AnimatePresence>
+        )}
+
+        {/* Command Results */}
+        {commandResults.length > 0 && (
+          <AnimatePresence>
+            {commandResults.map((result, index) => (
+              <motion.div
+                key={`cmd-${index}`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex justify-start"
+              >
+                <CommandResponse result={result} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        )}
+
+        {/* Command executing indicator */}
+        {executingCommand && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex justify-start"
+          >
+            <div className="bg-bg-elevated border border-border-subtle p-4 rounded flex items-center gap-2">
+              <Terminal size={16} className="text-accent-cyan" />
+              <span className="text-text-muted text-sm font-mono">Executing command...</span>
+              <Loader2 size={14} className="animate-spin text-accent-cyan" />
+            </div>
+          </motion.div>
         )}
 
         {/* Typing indicator */}
@@ -386,13 +380,13 @@ export function Chat() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-              placeholder={hasApiKey ? "Type a message..." : "Please set up API Key first..."}
-              disabled={!hasApiKey || sending}
+              placeholder={hasApiKey ? "Type a message or /help for commands..." : "Please set up API Key first..."}
+              disabled={(!hasApiKey && !input.startsWith("/")) || sending || executingCommand}
               className="terminal-input w-full pl-8 pr-12 disabled:opacity-50 disabled:cursor-not-allowed"
             />
             <button
               onClick={handleSend}
-              disabled={!input.trim() || !hasApiKey || sending}
+              disabled={!input.trim() || (!hasApiKey && !input.startsWith("/")) || sending || executingCommand}
               className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-text-muted hover:text-accent-cyan disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {sending ? (
@@ -404,7 +398,7 @@ export function Chat() {
           </div>
           <div className="flex items-center gap-4 mt-2 text-xs text-text-muted">
             <span>💡 Describe what you worked on today</span>
-            <span>· AI will help you log and categorize it</span>
+            <span>· /help for slash commands</span>
           </div>
         </div>
       </div>

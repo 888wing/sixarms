@@ -122,6 +122,9 @@ export const todoApi = {
 
   delete: (id: string) =>
     invoke<void>('delete_todo', { id }),
+
+  move: (id: string, column: string, position: number) =>
+    invoke<void>('move_todo', { id, column, position }),
 };
 
 // ============================================
@@ -330,6 +333,25 @@ export const schedulerApi = {
 
   triggerManualScan: () =>
     invoke<void>('trigger_manual_scan'),
+};
+
+// ============================================
+// Slash Commands API
+// ============================================
+
+export interface CommandResult {
+  success: boolean;
+  command: string;
+  message: string;
+  data?: unknown;
+}
+
+export const slashApi = {
+  execute: (input: string, projectId?: string) =>
+    invoke<CommandResult>('execute_slash_command', {
+      input,
+      project_id: projectId,
+    }),
 };
 
 // ============================================

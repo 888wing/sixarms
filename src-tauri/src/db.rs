@@ -174,6 +174,38 @@ impl Database {
             )?;
         }
 
+        // Add Kanban columns to todos table
+        let has_column_field: bool = conn
+            .prepare("SELECT column FROM todos LIMIT 1")
+            .is_ok();
+
+        if !has_column_field {
+            log::info!("Running migration: adding Kanban columns to todos");
+            // Add column field
+            conn.execute(
+                "ALTER TABLE todos ADD COLUMN column TEXT DEFAULT 'backlog'",
+                [],
+            )?;
+            // Add position field
+            conn.execute(
+                "ALTER TABLE todos ADD COLUMN position INTEGER DEFAULT 0",
+                [],
+            )?;
+            // Update existing data based on status
+            conn.execute(
+                "UPDATE todos SET column = 'done' WHERE status = 'completed' AND column IS NULL",
+                [],
+            )?;
+            conn.execute(
+                "UPDATE todos SET column = 'in_progress' WHERE status = 'in_progress' AND column IS NULL",
+                [],
+            )?;
+            conn.execute(
+                "UPDATE todos SET column = 'backlog' WHERE column IS NULL",
+                [],
+            )?;
+        }
+
         Ok(())
     }
 
@@ -540,8 +572,8 @@ impl Database {
     pub fn create_todo(&self, todo: &Todo) -> SqlResult<()> {
         let conn = self.get_conn()?;
         conn.execute(
-            "INSERT INTO todos (id, project_id, title, description, priority, status, due_date, created_at, completed_at)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            "INSERT INTO todos (id, project_id, title, description, priority, status, due_date, column, position, created_at, completed_at)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
             params![
                 todo.id,
                 todo.project_id,
@@ -550,6 +582,8 @@ impl Database {
                 serde_json::to_string(&todo.priority).unwrap().trim_matches('"'),
                 serde_json::to_string(&todo.status).unwrap().trim_matches('"'),
                 todo.due_date,
+                todo.column,
+                todo.position,
                 todo.created_at.to_rfc3339(),
                 todo.completed_at.map(|dt| dt.to_rfc3339()),
             ],
@@ -561,10 +595,10 @@ impl Database {
         let conn = self.get_conn()?;
 
         let query = match status {
-            Some(_) => "SELECT id, project_id, title, description, priority, status, due_date, created_at, completed_at
-                        FROM todos WHERE status = ?1 ORDER BY created_at DESC",
-            None => "SELECT id, project_id, title, description, priority, status, due_date, created_at, completed_at
-                     FROM todos ORDER BY created_at DESC",
+            Some(_) => "SELECT id, project_id, title, description, priority, status, due_date, column, position, created_at, completed_at
+                        FROM todos WHERE status = ?1 ORDER BY column, position, created_at DESC",
+            None => "SELECT id, project_id, title, description, priority, status, due_date, column, position, created_at, completed_at
+                     FROM todos ORDER BY column, position, created_at DESC",
         };
 
         let mut stmt = conn.prepare(query)?;
@@ -606,6 +640,31 @@ impl Database {
         Ok(())
     }
 
+    pub fn move_todo(&self, id: &str, column: &str, position: i32) -> SqlResult<()> {
+        let conn = self.get_conn()?;
+        let now = Utc::now().to_rfc3339();
+
+        // Update status based on column
+        let status = match column {
+            "done" => "completed",
+            "in_progress" => "in_progress",
+            _ => "pending",
+        };
+
+        // Set completed_at if moving to done column
+        let completed_at = if column == "done" {
+            Some(now.clone())
+        } else {
+            None
+        };
+
+        conn.execute(
+            "UPDATE todos SET column = ?1, position = ?2, status = ?3, completed_at = COALESCE(?4, completed_at) WHERE id = ?5",
+            params![column, position, status, completed_at, id],
+        )?;
+        Ok(())
+    }
+
     fn row_to_todo(row: &rusqlite::Row) -> rusqlite::Result<Todo> {
         let priority_str: String = row.get(4)?;
         let priority = match priority_str.as_str() {
@@ -631,10 +690,12 @@ impl Database {
             priority,
             status,
             due_date: row.get(6)?,
-            created_at: chrono::DateTime::parse_from_rfc3339(&row.get::<_, String>(7)?)
+            column: row.get::<_, Option<String>>(7)?.unwrap_or_else(|| "backlog".to_string()),
+            position: row.get::<_, Option<i32>>(8)?.unwrap_or(0),
+            created_at: chrono::DateTime::parse_from_rfc3339(&row.get::<_, String>(9)?)
                 .map(|dt| dt.with_timezone(&Utc))
                 .unwrap_or_else(|_| Utc::now()),
-            completed_at: row.get::<_, Option<String>>(8)?
+            completed_at: row.get::<_, Option<String>>(10)?
                 .and_then(|s| chrono::DateTime::parse_from_rfc3339(&s).ok())
                 .map(|dt| dt.with_timezone(&Utc)),
         })

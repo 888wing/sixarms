@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Plus, LayoutGrid, List } from "lucide-react";
 import { useTodoStore } from "../stores/todoStore";
 import { useProjectStore } from "../stores/projectStore";
 import { useToast } from "../components/Toast";
-import { TodoKanban } from "../components/TodoKanban";
-import type { TodoPriority, TodoStatus } from "../lib/types";
+import { KanbanBoard } from "../components/kanban";
+import { ProjectSelector } from "../components/ProjectSelector";
+import type { TodoPriority, TodoColumn } from "../lib/types";
 
 type ViewMode = "kanban" | "list";
 
@@ -17,8 +18,14 @@ export function Todos() {
   const [newTodoProjectId, setNewTodoProjectId] = useState<string>("");
 
   const toast = useToast();
-  const { todos, loading, fetchTodos, createTodo, updateTodoStatus, deleteTodo } = useTodoStore();
-  const { projects, fetchProjects } = useProjectStore();
+  const { todos, loading, fetchTodos, createTodo, moveTodo, deleteTodo } = useTodoStore();
+  const { projects, selectedProjectId, fetchProjects } = useProjectStore();
+
+  // Filter todos by selected project
+  const filteredTodos = useMemo(() => {
+    if (!selectedProjectId) return todos;
+    return todos.filter((t) => t.project_id === selectedProjectId);
+  }, [todos, selectedProjectId]);
 
   useEffect(() => {
     fetchTodos();
@@ -39,9 +46,8 @@ export function Todos() {
     toast.success("TODO created");
   };
 
-  const handleStatusChange = async (id: string, status: TodoStatus) => {
-    await updateTodoStatus(id, status);
-    toast.success(`Status updated to ${status.replace("_", " ")}`);
+  const handleMoveTodo = async (id: string, column: string, position: number) => {
+    await moveTodo(id, column as TodoColumn, position);
   };
 
   const handleDelete = async (id: string) => {
@@ -67,6 +73,7 @@ export function Todos() {
         </div>
 
         <div className="flex items-center gap-3">
+          <ProjectSelector />
           {/* View Toggle */}
           <div className="flex items-center bg-bg-secondary rounded-lg p-1">
             <button
@@ -175,14 +182,14 @@ export function Todos() {
             <div className="text-text-muted">Loading...</div>
           </div>
         ) : viewMode === "kanban" ? (
-          <TodoKanban
-            todos={todos}
-            onStatusChange={handleStatusChange}
-            onDelete={handleDelete}
+          <KanbanBoard
+            todos={filteredTodos}
+            onMoveTodo={handleMoveTodo}
+            onDeleteTodo={handleDelete}
           />
         ) : (
           <div className="space-y-2">
-            {todos.map((todo) => (
+            {filteredTodos.map((todo) => (
               <motion.div
                 key={todo.id}
                 initial={{ opacity: 0, x: -20 }}

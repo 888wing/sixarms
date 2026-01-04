@@ -2,7 +2,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Sidebar } from "./components/layout/Sidebar";
 import { ToastProvider } from "./components/Toast";
 import { UpdateChecker } from "./components/UpdateChecker";
-import { useSchedulerEvents } from "./hooks/useSchedulerEvents";
+import { useAppEvents } from "./hooks/useAppEvents";
+import { useStoreSync } from "./hooks/useStoreSync";
 import { Home } from "./pages/Home";
 import { Dashboard } from "./pages/Dashboard";
 import { Chat } from "./pages/Chat";
@@ -12,8 +13,10 @@ import { Versions } from "./pages/Versions";
 import { Settings } from "./pages/Settings";
 
 function AppContent() {
-  // Listen for scheduler events and show toast notifications
-  useSchedulerEvents();
+  // Listen for app events (scheduler + data sync) and show toast notifications
+  useAppEvents();
+  // Sync stores when project selection changes
+  useStoreSync();
 
   return (
     <BrowserRouter>

@@ -17,6 +17,8 @@ export const createMockTodo = (overrides: Partial<Todo> = {}): Todo => ({
   title: 'Test Todo',
   priority: 'medium',
   status: 'pending',
+  column: 'backlog',
+  position: 0,
   created_at: '2025-01-01T00:00:00Z',
   ...overrides,
 })
@@ -73,6 +75,7 @@ export const mockTodoApi = {
   ),
   updateStatus: vi.fn().mockResolvedValue(undefined),
   delete: vi.fn().mockResolvedValue(undefined),
+  move: vi.fn().mockResolvedValue(undefined),
 }
 
 // Inbox API Mock
