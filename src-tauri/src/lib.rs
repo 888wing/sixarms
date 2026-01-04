@@ -137,6 +137,7 @@ pub fn run() {
             grok_commands::has_api_key,
             grok_commands::delete_api_key,
             grok_commands::chat_with_grok,
+            grok_commands::chat_with_grok_history,
             grok_commands::classify_with_grok,
             grok_commands::generate_summary_with_grok,
             grok_commands::send_grok_messages,

@@ -25,6 +25,12 @@ pub struct GrokMessage {
     pub content: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ChatHistoryItem {
+    pub role: String,
+    pub content: String,
+}
+
 #[derive(Debug, Deserialize)]
 struct GrokResponse {
     choices: Vec<GrokChoice>,
@@ -181,6 +187,75 @@ impl GrokClient {
                 content: user_message.to_string(),
             },
         ];
+
+        self.chat(messages).await
+    }
+
+    /// Truncate history to fit within token limit
+    fn truncate_history(&self, history: Vec<ChatHistoryItem>, max_tokens: usize) -> Vec<ChatHistoryItem> {
+        let mut result = Vec::new();
+        let mut total_chars = 0;
+        let chars_per_token = 4; // Rough estimate for mixed CJK/English
+
+        // Add from newest to oldest
+        for item in history.into_iter().rev() {
+            let item_chars = item.content.len();
+            if total_chars + item_chars > max_tokens * chars_per_token {
+                break;
+            }
+            total_chars += item_chars;
+            result.push(item);
+        }
+
+        // Reverse back to chronological order
+        result.reverse();
+        result
+    }
+
+    /// Chat with conversation history support
+    pub async fn chat_with_history(
+        &self,
+        user_message: &str,
+        history: Vec<ChatHistoryItem>,
+        project_context: Option<&str>,
+        max_history_tokens: usize,
+    ) -> Result<String, String> {
+        let system_prompt = format!(
+            r#"你係 Sixarms，一個 AI 開發進度追蹤助手。你用廣東話同用戶溝通。
+
+你嘅職責：
+1. 幫用戶記錄每日嘅開發進度
+2. 分析 git 改動並提供分類建議
+3. 管理 TODO 清單
+4. 追蹤項目進度
+
+{}
+
+請用友善、專業嘅語氣回應。"#,
+            project_context.map(|c| format!("當前項目背景：\n{}", c)).unwrap_or_default()
+        );
+
+        let mut messages = vec![
+            GrokMessage {
+                role: "system".to_string(),
+                content: system_prompt,
+            },
+        ];
+
+        // Add truncated history
+        let truncated = self.truncate_history(history, max_history_tokens);
+        for item in truncated {
+            messages.push(GrokMessage {
+                role: item.role,
+                content: item.content,
+            });
+        }
+
+        // Add current user message
+        messages.push(GrokMessage {
+            role: "user".to_string(),
+            content: user_message.to_string(),
+        });
 
         self.chat(messages).await
     }

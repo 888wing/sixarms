@@ -14,7 +14,7 @@ interface ChatState {
   clearMessages: () => void;
 }
 
-export const useChatStore = create<ChatState>((set) => ({
+export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   loading: false,
   sending: false,
@@ -35,15 +35,27 @@ export const useChatStore = create<ChatState>((set) => ({
     set({ sending: true, error: null });
 
     try {
+      // Build history from existing messages (before adding new one)
+      const currentMessages = get().messages;
+      const history = currentMessages.map((m) => ({
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }));
+
       // Save user message to database
       const userMessage = await chatApi.createMessage('user', content, projectId);
       set((state) => ({
         messages: [...state.messages, userMessage],
       }));
 
-      // Get AI response from Grok
+      // Get AI response from Grok with conversation history
       try {
-        const aiResponse = await grokApi.chat(content, projectId);
+        const aiResponse = await grokApi.chatWithHistory(
+          content,
+          history,
+          projectId,
+          4000 // max history tokens
+        );
 
         // Save AI response to database
         const assistantMessage = await chatApi.createMessage(

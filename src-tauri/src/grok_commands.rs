@@ -1,5 +1,5 @@
 use tauri::State;
-use crate::grok::{GrokClient, GrokMessage};
+use crate::grok::{ChatHistoryItem, GrokClient, GrokMessage};
 use crate::keychain::Keychain;
 
 #[tauri::command]
@@ -30,6 +30,23 @@ pub async fn chat_with_grok(
     project_context: Option<String>,
 ) -> Result<String, String> {
     grok.chat_with_context(&message, project_context.as_deref()).await
+}
+
+#[tauri::command]
+pub async fn chat_with_grok_history(
+    grok: State<'_, GrokClient>,
+    message: String,
+    history: Vec<ChatHistoryItem>,
+    project_context: Option<String>,
+    max_history_tokens: Option<usize>,
+) -> Result<String, String> {
+    let max_tokens = max_history_tokens.unwrap_or(4000);
+    grok.chat_with_history(
+        &message,
+        history,
+        project_context.as_deref(),
+        max_tokens,
+    ).await
 }
 
 #[tauri::command]

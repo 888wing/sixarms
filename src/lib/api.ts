@@ -130,6 +130,11 @@ export interface GrokMessage {
   content: string;
 }
 
+export interface ChatHistoryItem {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export const grokApi = {
   setApiKey: (key: string) =>
     invoke<void>('set_api_key', { key }),
@@ -144,6 +149,19 @@ export const grokApi = {
     invoke<string>('chat_with_grok', {
       message,
       project_context: projectContext,
+    }),
+
+  chatWithHistory: (
+    message: string,
+    history: ChatHistoryItem[],
+    projectContext?: string,
+    maxHistoryTokens?: number
+  ) =>
+    invoke<string>('chat_with_grok_history', {
+      message,
+      history,
+      project_context: projectContext,
+      max_history_tokens: maxHistoryTokens ?? 4000,
     }),
 
   classify: (filesChanged: string, diffSummary: string) =>
