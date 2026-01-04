@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback, DragEvent } from "react";
 import { motion } from "framer-motion";
-import { Key, FolderOpen, Bell, Eye, EyeOff, Plus, X, Check, Loader2, Upload, Timer, Bot, Play } from "lucide-react";
+import { Key, FolderOpen, Bell, Eye, EyeOff, Plus, X, Check, Loader2, Upload, Timer, Bot, Play, Info, RefreshCw, Sparkles } from "lucide-react";
 import { open } from "@tauri-apps/plugin-dialog";
+import { getVersion } from "@tauri-apps/api/app";
 import { useProjectStore } from "../stores/projectStore";
 import { useSettingsStore } from "../stores/settingsStore";
+import { useUpdateStore } from "../stores/updateStore";
 import { useToast } from "../components/Toast";
 import { SkeletonProjectItem } from "../components/Skeleton";
+import { WhatsNew } from "../components/WhatsNew";
 import type { ProjectStatus } from "../lib/types";
 
 export function Settings() {
@@ -15,8 +18,11 @@ export function Settings() {
   const [newProjectPath, setNewProjectPath] = useState("");
   const [showAddProject, setShowAddProject] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [showWhatsNew, setShowWhatsNew] = useState(false);
+  const [currentVersion, setCurrentVersion] = useState("");
 
   const toast = useToast();
+  const { checking, update, checkForUpdates } = useUpdateStore();
 
   const {
     projects,
@@ -50,6 +56,19 @@ export function Settings() {
     checkApiKey();
     fetchSchedulerStatus();
   }, [fetchProjects, fetchSettings, checkApiKey, fetchSchedulerStatus]);
+
+  useEffect(() => {
+    getVersion().then(setCurrentVersion).catch(() => setCurrentVersion("0.2.0"));
+  }, []);
+
+  const handleCheckForUpdates = async () => {
+    await checkForUpdates();
+    if (update) {
+      toast.info(`Update available: v${update.version}`);
+    } else {
+      toast.success("You're on the latest version!");
+    }
+  };
 
   const handleSaveApiKey = async () => {
     if (apiKey.trim()) {
@@ -633,11 +652,74 @@ export function Settings() {
         </div>
       </motion.section>
 
+      {/* About Section */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4 }}
+        className="card p-6 mb-6"
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <Info size={18} className="text-accent-cyan" />
+          <h2 className="section-header text-lg">ABOUT</h2>
+        </div>
+
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-accent-cyan to-accent-purple flex items-center justify-center">
+              <span className="text-white font-display text-lg">6A</span>
+            </div>
+            <div>
+              <h3 className="text-text-primary font-display text-lg">Sixarms</h3>
+              <p className="text-text-muted text-sm font-mono">
+                Version {currentVersion || "..."}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowWhatsNew(true)}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-accent-purple hover:bg-accent-purple/10 rounded transition-colors"
+            >
+              <Sparkles size={14} />
+              What's New
+            </button>
+            <button
+              onClick={handleCheckForUpdates}
+              disabled={checking}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm text-accent-cyan hover:bg-accent-cyan/10 rounded transition-colors disabled:opacity-50"
+            >
+              <RefreshCw size={14} className={checking ? "animate-spin" : ""} />
+              {checking ? "Checking..." : "Check for Updates"}
+            </button>
+          </div>
+        </div>
+
+        {update && (
+          <div className="p-3 rounded bg-accent-green/10 border border-accent-green/30 text-sm">
+            <span className="text-accent-green font-medium">Update available: </span>
+            <span className="text-text-primary font-mono">v{update.version}</span>
+          </div>
+        )}
+
+        <p className="text-text-muted text-xs mt-4">
+          AI-powered development progress tracking assistant.{" "}
+          <a
+            href="https://github.com/888wing/sixarms"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-accent-cyan hover:underline"
+          >
+            View on GitHub
+          </a>
+        </p>
+      </motion.section>
+
       {/* Save Button */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
+        transition={{ delay: 0.45 }}
         className="flex justify-end"
       >
         <button
@@ -666,6 +748,9 @@ export function Settings() {
           )}
         </button>
       </motion.div>
+
+      {/* What's New Modal */}
+      <WhatsNew isOpen={showWhatsNew} onClose={() => setShowWhatsNew(false)} />
     </div>
   );
 }
